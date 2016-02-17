@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Stanford University
+/* Copyright (c) 2014-2016 Stanford University
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 #define RAMCLOUD_TIMETRACE_H
 
 #include <string>
+#include <xmmintrin.h>
 
 #include "Atomic.h"
 #include "Cycles.h"
@@ -37,12 +38,38 @@ class TimeTrace {
   public:
     TimeTrace(const char* filename = NULL);
     ~TimeTrace();
-    void record(const char* message, uint64_t timestamp = Cycles::rdtsc());
+    void record(uint64_t timestamp, const char* format, uint32_t arg0 = 0,
+            uint32_t arg1 = 0, uint32_t arg2 = 0, uint32_t arg3 = 0);
+    void record(const char* format, uint32_t arg0 = 0, uint32_t arg1 = 0,
+            uint32_t arg2 = 0, uint32_t arg3 = 0) {
+        record(Cycles::rdtsc(), format, arg0, arg1, arg2, arg3);
+    }
     void print();
     std::string getTrace();
     static TimeTrace* getGlobalInstance();
+    void reset();
 
   private:
+
+    /**
+     * Prefetch the cache lines containing [object, object + numBytes) into the
+     * processor's caches.
+     * The best docs for this are in the Intel instruction set reference under
+     * PREFETCH.
+     * \param object
+     *      The start of the region of memory to prefetch.
+     * \param numBytes
+     *      The size of the region of memory to prefetch.
+     */
+    static inline void
+    prefetch(const void* object, uint64_t numBytes)
+    {
+        uint64_t offset = reinterpret_cast<uint64_t>(object) & 0x3fUL;
+        const char* p = reinterpret_cast<const char*>(object) - offset;
+        for (uint64_t i = 0; i < offset + numBytes; i += 64)
+            _mm_prefetch(p + i, _MM_HINT_T0);
+    }
+
     void printInternal(std::string* s);
 
     /**
@@ -50,15 +77,30 @@ class TimeTrace {
      */
     struct Event {
       uint64_t timestamp;        // Time when a particular event occurred.
-      const char* message;       // Static string describing the event.
+      const char* format;        // Format string describing the event.
                                  // NULL means that this entry is unused.
+      uint32_t arg0;             // Argument that may be referenced by format
+                                 // when printing out this event.
+      uint32_t arg1;             // Argument that may be referenced by format
+                                 // when printing out this event.
+      uint32_t arg2;             // Argument that may be referenced by format
+                                 // when printing out this event.
+      uint32_t arg3;             // Argument that may be referenced by format
+                                 // when printing out this event.
     };
 
     // Total number of events that we can retain any given time.
     static const int BUFFER_SIZE = 10000;
 
+    // Number of events to prefetch ahead, in order to minimize cache
+    // misses.
+    static const int NUM_PREFETCH = 2;
+
     // Holds information from the most recent calls to the record method.
-    Event events[BUFFER_SIZE];
+    // Note: prefetching will cause NUM_PREFETCH extra elements past the
+    // end of the buffer, to be accessed (allocating extra space avoids
+    // the cost of being cleverer during prefetching).
+    Event events[BUFFER_SIZE + NUM_PREFETCH];
 
     // Index within events of the slot to use for the next call to the
     // record method.

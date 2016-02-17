@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Stanford University
+/* Copyright (c) 2014-2016 Stanford University
  *
  * Permission to use, copy, modify, and distribute this software for any purpose
  * with or without fee is hereby granted, provided that the above copyright
@@ -31,7 +31,7 @@ TimeTrace::TimeTrace(const char* filename)
 {
     // Mark all of the events invalid.
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        events[i].message = NULL;
+        events[i].format = NULL;
     }
 }
 
@@ -45,17 +45,29 @@ TimeTrace::~TimeTrace()
 /**
  * Record an event in the trace.
  *
- * \param message
- *      A short human-readable string identifying what happened, or the
- *      point in the code where this event was logged. This message is
- *      included in printouts of the time trace. This pointer is stored
- *      in the time trace, so either the string must be static, or the caller
- *      must ensure that its contents will not change over its lifetime
- *      in the trace.
  * \param timestamp
  *      Identifies the time at which the event occurred.
+ * \param format
+ *      A format string for snprintf that will be used, along with
+ *      arg0..arg3, to generate a human-readable message describing what
+ *      happened, when the time trace is printed. The message is generated
+ *      by calling snprintf as follows:
+ *      snprintf(buffer, size, format, arg0, arg1, arg2, arg3)
+ *      where format and arg0..arg3 are the corresponding arguments to this
+ *      method. This pointer is stored in the time trace, so the caller must
+ *      ensure that its contents will not change over its lifetime in the
+ *      trace.
+ * \param arg0
+ *      Argument to use when printing a message about this event.
+ * \param arg1
+ *      Argument to use when printing a message about this event.
+ * \param arg2
+ *      Argument to use when printing a message about this event.
+ * \param arg3
+ *      Argument to use when printing a message about this event.
  */
-void TimeTrace::record(const char* message, uint64_t timestamp)
+void TimeTrace::record(uint64_t timestamp, const char* format,
+        uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
     if (readerActive) {
         return;
@@ -78,8 +90,18 @@ void TimeTrace::record(const char* message, uint64_t timestamp)
         }
     }
 
-    events[current].timestamp = timestamp;
-    events[current].message = message;
+    Event* event = &events[current];
+
+    // Prefetch the next few events, in order to minimize cache misses on
+    // the buffer.
+    prefetch(event+1, NUM_PREFETCH*sizeof(Event));
+
+    event->timestamp = timestamp;
+    event->format = format;
+    event->arg0 = arg0;
+    event->arg1 = arg1;
+    event->arg2 = arg2;
+    event->arg3 = arg3;
 }
 
 /**
@@ -121,9 +143,9 @@ void TimeTrace::printInternal(string* s)
     // Find the oldest event that we still have (either events[nextIndex],
     // or events[0] if we never completely filled the buffer).
     int i = nextIndex;
-    if (events[i].message == NULL) {
+    if (events[i].format == NULL) {
         i = 0;
-        if (events[0].message == NULL) {
+        if (events[0].format == NULL) {
             if (s != NULL) {
                 s->append("No time trace events to print");
             } else {
@@ -141,22 +163,28 @@ void TimeTrace::printInternal(string* s)
 
     // Each iteration through this loop processes one event from the trace.
     do {
+        char buffer[200];
         double ns = Cycles::toSeconds(events[i].timestamp - start) * 1e09;
         if (s != NULL) {
-            char buffer[200];
             if (s->length() != 0) {
                 s->append("\n");
             }
-            snprintf(buffer, sizeof(buffer), "%8.1f ns (+%6.1f ns): %s",
-                    ns, ns - prevTime, events[i].message);
+            snprintf(buffer, sizeof(buffer), "%8.1f ns (+%6.1f ns): ",
+                    ns, ns - prevTime);
+            s->append(buffer);
+            snprintf(buffer, sizeof(buffer), events[i].format, events[i].arg0,
+                     events[i].arg1, events[i].arg2, events[i].arg3);
             s->append(buffer);
         } else {
-            fprintf(output, "%8.1f ns (+%6.1f ns): %s\n", ns, ns - prevTime,
-                    events[i].message);
+            fprintf(output, "%8.1f ns (+%6.1f ns): ",
+                ns, ns - prevTime);
+            fprintf(output, events[i].format, events[i].arg0,
+                     events[i].arg1, events[i].arg2, events[i].arg3);
+            fprintf(output, "\n");
         }
         i = (i+1)%BUFFER_SIZE;
         prevTime = ns;
-    } while ((i != nextIndex) && (events[i].message != NULL));
+    } while ((i != nextIndex) && (events[i].format != NULL));
 
     if (output && output != stdout)
         fclose(output);
