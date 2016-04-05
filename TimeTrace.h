@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RAMCLOUD_TIMETRACE_H
-#define RAMCLOUD_TIMETRACE_H
+#ifndef PERFUTIL_TIMETRACE_H
+#define PERFUTIL_TIMETRACE_H
 
 #include <string>
 #include <xmmintrin.h>
@@ -119,10 +119,10 @@ class TimeTrace {
     static TimeTrace* globalTrace;
 };
 
-} // namespace RAMCloud
+} // namespace PerfUtils
 
 #define TRACE(exp) TimeTrace::getGlobalInstance()->record(exp)
 #define TRACED(exp, t) TimeTrace::getGlobalInstance()->record(exp, t)
 
-#endif // RAMCLOUD_TIMETRACE_H
+#endif // PERFUTIL_TIMETRACE_H
 

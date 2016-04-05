@@ -60,12 +60,12 @@ Cycles::init() {
     oldCycles = 0;
     while (1) {
         if (gettimeofday(&startTime, NULL) != 0) {
-            PG_DIE("Cycles::init couldn't read clock: %s", strerror(errno));
+            PERFUTILS_DIE("Cycles::init couldn't read clock: %s", strerror(errno));
         }
         startCycles = rdtsc();
         while (1) {
             if (gettimeofday(&stopTime, NULL) != 0) {
-                PG_DIE("Cycles::init couldn't read clock: %s",
+                PERFUTILS_DIE("Cycles::init couldn't read clock: %s",
                         strerror(errno));
             }
             stopCycles = rdtsc();
@@ -222,4 +222,4 @@ Cycles::sleep(uint64_t us)
     uint64_t stop = Cycles::rdtsc() + Cycles::fromNanoseconds(1000*us);
     while (Cycles::rdtsc() < stop);
 }
-} // end RAMCloud
+} // end PerfUtils

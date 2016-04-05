@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PERFGRAPH_UTIL_H
-#define PERFGRAPH_UTIL_H
+#ifndef PERFUTIL_UTIL_H
+#define PERFUTIL_UTIL_H
 
 #include <time.h>
 #include <stdint.h>
@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <linux/perf_event.h>
 #include <sys/ioctl.h>
 #include <asm/unistd.h>
 #include <cstdio>
@@ -70,28 +69,6 @@ rdpmc(int ecx)
 }
 
 /**
-  * Pretty crazy syscall interface for perf_event_open
-  *
-  * Full docs here:
-  * http://web.eece.maine.edu/~vweaver/projects/perf_events/perf_event_open.html
-  */
-static int FORCE_INLINE 
-perf_event_open(struct perf_event_attr *hw_event, 
-                pid_t pid,
-                int cpu, 
-                int group_fd, 
-                unsigned long flags)
-{
-    int ret;
-
-    ret = static_cast<int>(syscall(__NR_perf_event_open, hw_event,
-            pid, cpu,
-            group_fd, flags));
-    return ret;
-}
-
-
-/**
   * Returns the thread id of the calling thread
   * As long as the thread continues to run, this id is unique across all threads
   * running ont he system so it can be used to uniquely name per-thread 
@@ -103,61 +80,6 @@ gettid()
 {
     return static_cast<pid_t>(syscall( __NR_gettid ));
 }
-
-/**
-  * Returns the number of processes referencing the file named by
-  * fileName. Relies on the fuser and the wc commands.
-  *
-  * WARNING: fileName is injected into a shell command, so code injection is
-  * possible. The argument to this method should not be produced by data
-  * taken from an untrusted user.
-  *
-  * BUGGY. This seems to be flakey and is not always reporting all
-  * processes referencing a file. Oh well, doesn't seem to be a problem
-  * (yet..)
-  */ 
-static 
-int getNumFileReferences(const std::string& fileName) 
-    __attribute__ ((unused));
-
-static
-int getNumFileReferences(const std::string& fileName){
-    const int commandMaxLength = 1000;
-    char command[commandMaxLength];
-    const int dataLength = 32;
-    char data[dataLength];
-    int rc;
-    int numFileReferences;
-    char* fgetRet;
-    snprintf(command, 
-             commandMaxLength,
-             "fuser %s 2>/dev/null | wc -w",
-             fileName.c_str());
-    FILE * pf = popen(command, "r");
-    assert(pf);
-    if (!pf){
-        assert(false);
-        goto err;
-    }
-    fgetRet = fgets(data, dataLength, pf);
-    if (!fgetRet){
-        assert(false);
-        goto err;
-    }
-    rc = pclose(pf);
-    //TODO(bjmnbraun@gmail.com) figure out the error codes of pclose
-    assert(rc == 0);
-    if (!(rc == 0)){
-        goto err;
-    }
-    numFileReferences = atoi(data);
-    return numFileReferences;
-err:
-    fprintf(stderr, "Could not run fuser command on file handle %s\n",
-    fileName.c_str());
-    throw std::runtime_error("Could not get num open file handles");
-}
-
 
 /**
  * This function pins the currently executing thread onto the CPU Core with
@@ -229,7 +151,7 @@ void barrier(){
     asm volatile("" : : : "memory");
 }
 
-#define PG_DIE(format_, ...) do { \
+#define PERFUTILS_DIE(format_, ...) do { \
     fprintf(stderr, format_, ##__VA_ARGS__); \
     fprintf(stderr, "%s:%d\n" , __FILE__, __LINE__); \
     abort(); \
@@ -237,7 +159,7 @@ void barrier(){
 
 } // end Util
 
-} // end RAMCloud
+} // end PerfUtils
 
 #undef FORCE_INLINE
-#endif  // RAMCLOUD_UTIL_H
+#endif  // PERFUTIL_UTIL_H
