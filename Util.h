@@ -151,6 +151,25 @@ void barrier(){
     asm volatile("" : : : "memory");
 }
 
+/**
+ * This is a convenience function to make a call to rdpmc with serializing
+ * wrappers to ensure all earlier instructions have executed and no later
+ * instructions have executed.
+ *
+ * \param ecx
+ *      The index of the PMC register to read the value from. The correct
+ *      value of this parameter is dependent on the selected pmc.
+ */
+static FORCE_INLINE
+uint64_t
+serialReadPmc(int ecx)
+{
+    serialize();
+    uint64_t retVal = rdpmc(ecx);
+    serialize();
+    return retVal;
+}
+
 #define PERFUTILS_DIE(format_, ...) do { \
     fprintf(stderr, format_, ##__VA_ARGS__); \
     fprintf(stderr, "%s:%d\n" , __FILE__, __LINE__); \
