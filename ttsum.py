@@ -77,7 +77,9 @@ def scan(f, startingEvent):
     for line in f:
         match = re.match(' *([0-9.]+) ns \(\+ *([0-9.]+) ns\): (.*)', line)
         if not match:
-            continue
+            match = re.match(' *([0-9.]+) misses \(\+ *([0-9.]+) misses\): (.*)', line)
+            if not match:
+                continue
         thisEventTime = float(match.group(1))
         thisEventInterval = float(match.group(2))
         thisEvent = match.group(3)
