@@ -29,14 +29,14 @@ namespace PerfUtils {
  * It's typically used to record counts at various points in an operation,
  * in order to find performance bottlenecks. It can record a trace relatively
  * efficiently, and then either return the trace either as a string or
- * print it to the system log.
+ * print it to a file that is specified by the constructor.
  *
  * This class is not synchronized, and is therefore not thread-safe.  Moreover,
  * it is meaningless to collect a trace including counters from multiple
  * threads, because the counters which are read by rdpmc are specific to each
  * CPU core.
  *
- * Please read the note on readPmc() carefully before using this class.
+ * Please read the note on rdpmc() carefully before using this class.
  */
 class CacheTrace {
   public:
