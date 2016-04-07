@@ -135,11 +135,11 @@ void CacheTrace::printInternal(std::string* s)
             if (s->length() != 0) {
                 s->append("\n");
             }
-            snprintf(buffer, sizeof(buffer), "%lu misses (+%lu misses): %s",
+            snprintf(buffer, sizeof(buffer), "%6lu misses (+%4lu misses): %s",
                     miss, miss - prevCount, events[i].message);
             s->append(buffer);
         } else {
-            fprintf(output, "%lu misses (+%lu misses): %s\n", miss,
+            fprintf(output, "%6lu misses (+%4lu misses): %s\n", miss,
                     miss - prevCount, events[i].message);
         }
         i = (i+1)%BUFFER_SIZE;
@@ -151,6 +151,7 @@ void CacheTrace::printInternal(std::string* s)
 }
 
 CacheTrace* CacheTrace::globalTrace = NULL;
+
 /**
  * This method returns the single global instance of CacheTrace for those that want the global view.
  */
