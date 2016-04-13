@@ -76,7 +76,7 @@ class CacheTrace {
     };
 
     // Total number of events that we can retain at any given time.
-    static const int BUFFER_SIZE = 1000;
+    static const int BUFFER_SIZE = 10000;
 
     // Holds information from the most recent calls to the record method.
     Event events[BUFFER_SIZE];
