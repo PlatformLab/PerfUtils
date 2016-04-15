@@ -62,6 +62,12 @@ relativeEvents = {}
 
 eventCount = {}
 
+# This variable holds the names of events in the order in which they originally
+# occurred. It is used for breaking ties when sorting by trace value relative
+# to some starting event, especially when we are looking at a CacheTrace
+# instead of a TimeTrace.
+eventNames = []
+
 def scan(f, startingEvent):
     """
     Scan the log file given by 'f' (handle for an open file) and collect
@@ -91,6 +97,8 @@ def scan(f, startingEvent):
                 eventIntervals[thisEvent] = []
             eventIntervals[thisEvent].append(thisEventInterval)
             # print('%s %s %s' % (thisEventTime, thisEventInterval, thisEvent))
+        if thisEvent not in eventNames:
+            eventNames.append(thisEvent)
         if startingEvent:
             if string.find(thisEvent, startingEvent) >= 0:
                 # Reset variables to indicate that we are starting a new
@@ -121,6 +129,8 @@ def scan(f, startingEvent):
                 occurrences.append({'times': [], 'intervals': []})
             occurrences[count-1]['times'].append(relativeTime)
             occurrences[count-1]['intervals'].append(thisEventInterval)
+
+
 
 # Parse command line options
 parser = OptionParser(description=
@@ -161,7 +171,7 @@ if not options.startEvent:
         message = '%-*s  %8.1f %8.1f %8.1f %8.1f %7d' % (nameLength,
             event, medianTime, intervals[0], intervals[-1],
             sum(intervals)/len(intervals), len(intervals))
-        outputInfo.append([medianTime, message])
+        outputInfo.append([medianTime, message, event])
 
     # Pass 2: sort in order of median interval length, then print.
     outputInfo.sort(key=lambda item: item[0], reverse=True)
@@ -176,7 +186,8 @@ if not options.startEvent:
 # then sort them by elapsed time from the starting event.
 if options.startEvent:
     # Each entry in the following variable will contain a list with
-    # 2 elements: time to use for sorting, and string to print.
+    # 3 elements: time to use for sorting, and string to print, and a event
+    # name for secondary sorting.
     outputInfo = []
 
     # Compute the length of the longest event name.
@@ -207,9 +218,30 @@ if options.startEvent:
                 eventName, medianTime, times[0], times[-1],
                 sum(times)/len(times), intervals[len(intervals)//2],
                 len(times))
-            outputInfo.append([medianTime, message])
+            outputInfo.append([medianTime, message, event])
 
-    outputInfo.sort(key=lambda item: item[0])
+    # Rotate eventNames so that the starting event appears first in the list,
+    # and we can sort other events based on the index in eventNames.
+    startIndex = 0
+    for index, eventName in enumerate(eventNames):
+        if options.startEvent in eventName:
+            startIndex = index
+            break
+    eventNames = eventNames[startIndex:] + eventNames[:startIndex]
+
+    # This function compares events in a TimeTrace or CacheTrace first by the
+    # median value relative to the strarting event, and then by the order they
+    # appeared in the trace, relative to the starting event.
+    def eventComparator(x,y):
+        if x[0] < y[0]: return -1
+        if x[0] > y[0]: return 1
+        if eventNames.index(x[2]) < eventNames.index(y[2]):
+            return -1
+        if eventNames.index(x[2]) > eventNames.index(y[2]):
+            return 1
+        return 0
+
+    outputInfo.sort(cmp=eventComparator)
     print('%-*s    Median      Min      Max  Average    Delta   Count' % (nameLength,
             "Event"))
     print('%s------------------------------------------------------' %
