@@ -16,18 +16,71 @@
 #include "TimeTrace.h"
 
 
-namespace PerfUtils {
-
 using std::string;
+using std::vector;
+namespace PerfUtils {
+__thread TimeTrace::Buffer* TimeTrace::threadBuffer = NULL;
+std::vector<TimeTrace::Buffer*> TimeTrace::threadBuffers;
+std::mutex TimeTrace::mutex;
+const char* TimeTrace::filename = NULL;
 
 /**
- * Construct a TimeTrace.
+ * Creates a thread-private TimeTrace::Buffer object for the current thread,
+ * if one doesn't already exist.
  */
-TimeTrace::TimeTrace(const char* filename)
-    : events()
-    , nextIndex(0)
-    , readerActive(false)
-    , filename(filename)
+void
+TimeTrace::createThreadBuffer()
+{
+    std::lock_guard<std::mutex> guard(mutex);
+    if (threadBuffer == NULL) {
+        threadBuffer = new Buffer;
+        threadBuffers.push_back(threadBuffer);
+    }
+}
+
+
+/**
+ * Return a string containing all of the trace records from all of the
+ * thread-local buffers.
+ */
+string
+TimeTrace::getTrace()
+{
+    std::vector<TimeTrace::Buffer*> buffers;
+    string s;
+
+    // Make a copy of the list of traces, so we can do the actual tracing
+    // without holding a lock and without fear of the list changing.
+    {
+        std::lock_guard<std::mutex> guard(mutex);
+        buffers = threadBuffers;
+    }
+    TimeTrace::printInternal(&buffers, &s);
+    return s;
+}
+
+/**
+ * Print all existing trace records to either a user-specified file or to
+ * stdout.
+ */
+void
+TimeTrace::print()
+{
+    std::vector<TimeTrace::Buffer*> buffers;
+    {
+        std::lock_guard<std::mutex> guard(mutex);
+        buffers = threadBuffers;
+    }
+    printInternal(&buffers, NULL);
+}
+
+/**
+ * Construct a TimeTrace::Buffer.
+ */
+TimeTrace::Buffer::Buffer()
+    : nextIndex(0)
+    , activeReaders(0)
+    , events()
 {
     // Mark all of the events invalid.
     for (int i = 0; i < BUFFER_SIZE; i++) {
@@ -36,14 +89,14 @@ TimeTrace::TimeTrace(const char* filename)
 }
 
 /**
- * Destructor for TimeTrace.
+ * Destructor for TimeTrace::Buffer.
  */
-TimeTrace::~TimeTrace()
+TimeTrace::Buffer::~Buffer()
 {
 }
 
 /**
- * Record an event in the trace.
+ * Record an event in the buffer.
  *
  * \param timestamp
  *      Identifies the time at which the event occurred.
@@ -54,7 +107,7 @@ TimeTrace::~TimeTrace()
  *      by calling snprintf as follows:
  *      snprintf(buffer, size, format, arg0, arg1, arg2, arg3)
  *      where format and arg0..arg3 are the corresponding arguments to this
- *      method. This pointer is stored in the time trace, so the caller must
+ *      method. This pointer is stored in the buffer, so the caller must
  *      ensure that its contents will not change over its lifetime in the
  *      trace.
  * \param arg0
@@ -66,35 +119,21 @@ TimeTrace::~TimeTrace()
  * \param arg3
  *      Argument to use when printing a message about this event.
  */
-void TimeTrace::record(uint64_t timestamp, const char* format,
+void TimeTrace::Buffer::record(uint64_t timestamp, const char* format,
         uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
-    if (readerActive) {
+    if (activeReaders > 0) {
         return;
     }
-    int current;
 
-    // This loop allocates a slot for the new event and handles
-    // synchronization between threads; if there is a race, it may
-    // execute multiple times.
-    while (1) {
-        current = nextIndex;
+    Event* event = &events[nextIndex];
+    nextIndex = (nextIndex + 1) % BUFFER_SIZE;
 
-        // Don't use % to increment current with wraparound: it's too slow.
-        int newNext = current + 1;
-        if (newNext == BUFFER_SIZE) {
-            newNext = 0;
-        }
-        if (nextIndex.compareExchange(current, newNext) == current) {
-            break;
-        }
-    }
-
-    Event* event = &events[current];
-
-    // Prefetch the next few events, in order to minimize cache misses on
-    // the buffer.
-    prefetch(event+1, NUM_PREFETCH*sizeof(Event));
+    // There used to be code here for prefetching the next few events,
+    // in order to minimize cache misses on the array of events. However,
+    // performance measurements indicate that this actually slows things
+    // down by 2ns per invocation.
+    // prefetch(event+1, NUM_PREFETCH*sizeof(Event));
 
     event->timestamp = timestamp;
     event->format = format;
@@ -105,12 +144,14 @@ void TimeTrace::record(uint64_t timestamp, const char* format,
 }
 
 /**
- * Return a string containing a printout of the records in the trace.
+ * Return a string containing a printout of the records in the buffer.
  */
-string TimeTrace::getTrace()
+string TimeTrace::Buffer::getTrace()
 {
     string s;
-    printInternal(&s);
+    std::vector<TimeTrace::Buffer*> buffers;
+    buffers.push_back(this);
+    printInternal(&buffers, &s);
     return s;
 }
 
@@ -118,86 +159,151 @@ string TimeTrace::getTrace()
  * Print all existing trace records to either a user-specified file or to
  * stdout.
  */
-void TimeTrace::print()
+void TimeTrace::Buffer::print()
 {
-    printInternal(NULL);
+    std::vector<TimeTrace::Buffer*> buffers;
+    buffers.push_back(this);
+    printInternal(&buffers, NULL);
 }
 
 /**
  * This private method does most of the work for both printToLog and
  * getTrace.
  *
+ * \param buffers
+ *      Contains one or more TimeTrace::Buffers, whose contents will be merged
+ *      in the resulting output. Note: some of the buffers may extend
+ *      farther back in time than others. The output will cover only the
+ *      time period covered by *all* of the traces, ignoring older entries
+ *      from some traces.
  * \param s
  *      If non-NULL, refers to a string that will hold a printout of the
  *      time trace. If NULL, the trace will be printed on the system log.
  */
-void TimeTrace::printInternal(string* s)
+void
+TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
 {
-    readerActive = true;
+    bool printedAnything = false;
+    for (uint32_t i = 0; i < buffers->size(); i++) {
+        buffers->at(i)->activeReaders.add(1);
+    }
 
     // Initialize file for writing
     FILE* output = NULL;
     if (s == NULL)
         output = filename ? fopen(filename, "a") : stdout;
 
-    // Find the oldest event that we still have (either events[nextIndex],
-    // or events[0] if we never completely filled the buffer).
-    int i = nextIndex;
-    if (events[i].format == NULL) {
-        i = 0;
-        if (events[0].format == NULL) {
-            if (s != NULL) {
-                s->append("No time trace events to print");
-            } else {
-                fprintf(output, "No time trace events to print\n");
-            }
-            readerActive = false;
-            return;
+    // Holds the index of the next event to consider from each trace.
+    std::vector<int> current;
+
+    // Find the first (oldest) event in each trace. This will be events[0]
+    // if we never completely filled the buffer, otherwise events[nextIndex+1].
+    // This means we don't print the entry at nextIndex; this is convenient
+    // because it simplifies boundary conditions in the code below.
+    for (uint32_t i = 0; i < buffers->size(); i++) {
+        TimeTrace::Buffer* buffer = buffers->at(i);
+        int index = (buffer->nextIndex + 1) % Buffer::BUFFER_SIZE;
+        if (buffer->events[index].format != NULL) {
+            current.push_back(index);
+        } else {
+            current.push_back(0);
         }
     }
 
-    // Retrieve a "starting time" so we can print individual event times
-    // relative to the starting time.
-    uint64_t start = events[i].timestamp;
-    double prevTime = 0.0;
+    // Decide on the time of the first event to be included in the output.
+    // This is most recent of the oldest times in all the traces (an empty
+    // trace has an "oldest time" of 0). The idea here is to make sure
+    // that there's no missing data in what we print (if trace A goes back
+    // farther than trace B, skip the older events in trace A, since there
+    // might have been related events that were once in trace B but have since
+    // been overwritten).
+    uint64_t startTime = 0;
+    for (uint32_t i = 0; i < buffers->size(); i++) {
+        Event* event = &buffers->at(i)->events[current[i]];
+        if ((event->format != NULL) && (event->timestamp > startTime)) {
+            startTime = event->timestamp;
+        }
+    }
 
-    // Each iteration through this loop processes one event from the trace.
-    do {
-        char buffer[200];
-        double ns = Cycles::toSeconds(events[i].timestamp - start) * 1e09;
+    // Skip all events before the starting time.
+    for (uint32_t i = 0; i < buffers->size(); i++) {
+        TimeTrace::Buffer* buffer = buffers->at(i);
+        while ((buffer->events[current[i]].format != NULL) &&
+                (buffer->events[current[i]].timestamp < startTime)) {
+            current[i] = (current[i] + 1) % Buffer::BUFFER_SIZE;
+        }
+    }
+
+    // Each iteration through this loop processes one event (the one with
+    // the earliest timestamp).
+    double prevTime = 0.0;
+    while (1) {
+        TimeTrace::Buffer* buffer;
+        Event* event;
+
+        // Check all the traces to find the earliest available event.
+        int currentBuffer = -1;
+        uint64_t earliestTime = ~0;
+        for (uint32_t i = 0; i < buffers->size(); i++) {
+            buffer = buffers->at(i);
+            event = &buffer->events[current[i]];
+            if ((current[i] != buffer->nextIndex) && (event->format != NULL)
+                    && (event->timestamp < earliestTime)) {
+                currentBuffer = static_cast<int>(i);
+                earliestTime = event->timestamp;
+            }
+        }
+        if (currentBuffer < 0) {
+            // None of the traces have any more events to process.
+            break;
+        }
+        printedAnything = true;
+        buffer = buffers->at(currentBuffer);
+        event = &buffer->events[current[currentBuffer]];
+        current[currentBuffer] = (current[currentBuffer] + 1)
+                % Buffer::BUFFER_SIZE;
+
+        char message[1000];
+        double ns = Cycles::toSeconds(event->timestamp - startTime) * 1e09;
         if (s != NULL) {
             if (s->length() != 0) {
                 s->append("\n");
             }
-            snprintf(buffer, sizeof(buffer), "%8.1f ns (+%6.1f ns): ",
+            snprintf(message, sizeof(message), "%8.1f ns (+%6.1f ns): ",
                     ns, ns - prevTime);
-            s->append(buffer);
-            snprintf(buffer, sizeof(buffer), events[i].format, events[i].arg0,
-                     events[i].arg1, events[i].arg2, events[i].arg3);
-            s->append(buffer);
+            s->append(message);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+            snprintf(message, sizeof(message), event->format, event->arg0,
+                     event->arg1, event->arg2, event->arg3);
+#pragma GCC diagnostic pop
+            s->append(message);
         } else {
-            fprintf(output, "%8.1f ns (+%6.1f ns): ",
-                ns, ns - prevTime);
-            fprintf(output, events[i].format, events[i].arg0,
-                     events[i].arg1, events[i].arg2, events[i].arg3);
-            fprintf(output, "\n");
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+            snprintf(message, sizeof(message), event->format, event->arg0,
+                     event->arg1, event->arg2, event->arg3);
+#pragma GCC diagnostic pop
+            fprintf(output, "%8.1f ns (+%6.1f ns): %s", ns, ns - prevTime,
+                    message);
+            fputc('\n', output);
         }
-        i = (i+1)%BUFFER_SIZE;
         prevTime = ns;
-    } while ((i != nextIndex) && (events[i].format != NULL));
+    }
 
+    if (!printedAnything) {
+        if (s != NULL) {
+            s->append("No time trace events to print");
+        } else {
+            fprintf(output, "No time trace events to print");
+        }
+    }
+
+    for (uint32_t i = 0; i < buffers->size(); i++) {
+        buffers->at(i)->activeReaders.add(-1);
+    }
     if (output && output != stdout)
         fclose(output);
-    readerActive = false;
-}
-
-TimeTrace* TimeTrace::globalTrace = NULL;
-/**
- * This method returns the single global instance of TimeTrace for those that want the global view.
- */
-TimeTrace* TimeTrace::getGlobalInstance() {
-    if (!globalTrace) globalTrace = new TimeTrace("TimeTrace.log");
-    return globalTrace;
 }
 
 } // namespace RAMCloud
