@@ -7,7 +7,7 @@ OBJECTS:=$(SRCS:.cpp=.o)
 all: libPerfUtils.a
 
 libPerfUtils.a: $(SRCS) $(INCLUDES)
-	g++  -O3 -c  -std=c++0x  $(SRCS)
+	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
 	ar -cvq libPerfUtils.a $(OBJECTS)
 
 TTTest: TTTest.cpp 
