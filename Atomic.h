@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RAMCLOUD_ATOMIC_H
-#define RAMCLOUD_ATOMIC_H
+#ifndef PERFUTILS_ATOMIC_H
+#define PERFUTILS_ATOMIC_H
 
 #include <stdint.h>
 
@@ -223,4 +223,4 @@ class Atomic {
 
 } // end RAMCloud
 
-#endif  // RAMCLOUD_ATOMIC_H
+#endif  // PERFUTILS_ATOMIC_H

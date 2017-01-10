@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PERFGRAPH_CYCLES_H
-#define PERFGRAPH_CYCLES_H
+#ifndef PERFUTILS_CYCLES_H
+#define PERFUTILS_CYCLES_H
 
 #include <stdint.h>
 
@@ -93,4 +93,4 @@ class Cycles {
 
 } // end DDTrace
 
-#endif  // RAMCLOUD_CYCLES_H
+#endif  // PERFUTILS_CYCLES_H
