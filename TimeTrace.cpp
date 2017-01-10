@@ -167,6 +167,33 @@ void TimeTrace::Buffer::print()
 }
 
 /**
+ * Discard any existing trace records.
+ */
+void TimeTrace::Buffer::reset()
+{
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
+        if (events[i].format == NULL) {
+            break;
+        }
+        events[i].format = NULL;
+    }
+    nextIndex = 0;
+}
+
+/**
+ * Discards all records in all of the thread-local buffers. Intended
+ * primarily for unit testing.
+ */
+void
+TimeTrace::reset()
+{
+    std::lock_guard<std::mutex> guard(mutex);
+    for (uint32_t i = 0; i < TimeTrace::threadBuffers.size(); i++) {
+        TimeTrace::threadBuffers[i]->reset();
+    }
+}
+
+/**
  * This private method does most of the work for both printToLog and
  * getTrace.
  *
