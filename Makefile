@@ -4,7 +4,12 @@ OBJECTS:=$(SRCS:.cpp=.o)
 
 
 
-all: libPerfUtils.a
+all: libPerfUtils.so libPerfUtils.a
+
+libPerfUtils.so: $(SRCS) $(INCLUDES)
+	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
+	$(CC) -shared -Wl,-soname,libPerfUtils.so.0.0 -o $@ $(LDFLAGS) $(OBJECTS)
+	ln -f -s $@ libPerfUtils.so.0.0
 
 libPerfUtils.a: $(SRCS) $(INCLUDES)
 	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
