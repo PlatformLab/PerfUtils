@@ -1,4 +1,7 @@
 *.o
 *.a
 *.log
+*.txt
 TTTest
+libPerfUtils.so
+libPerfUtils.so.0.0
