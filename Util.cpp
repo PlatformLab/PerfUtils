@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include <string>
 
+#define CACHE_LINE_SIZE 64
+
 using std::string;
 
 namespace PerfUtils {
@@ -172,6 +174,22 @@ std::vector<int> getAllUseableCores() {
         return std::vector<int>();
     }
     return parseRanges(path);
+}
+
+/**
+  * Allocate a block of memory aligned at the beginning of a cache line.
+  *
+  * \param size
+  *     The amount of memory to allocate.
+  */
+void* cacheAlignAlloc(size_t size) {
+    void *temp;
+    int result = posix_memalign(&temp, CACHE_LINE_SIZE, size);
+    if (result == 0) {
+        assert((reinterpret_cast<uint64_t>(temp) & (CACHE_LINE_SIZE - 1)) == 0);
+        return temp;
+    }
+    return NULL;
 }
 
 } // namespace Util
