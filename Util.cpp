@@ -112,6 +112,67 @@ hexDump(const void *buf, uint64_t bytes)
     return output.str();
 }
 
+/**
+ * Split a string by the given single-character delimiter, and append the
+ * split pieces into elems.
+ */
+void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
+
+/**
+ * Split a string by the given single-character delimiter, and return the split
+ * pieces into an std::vector<std::string>.
+ */
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+/**
+ * Take a string containing comma-separated ranges of integers and return an
+ * std::vector containing the numbers in each range.
+ */
+std::vector<int> parseRanges(const char* coreDesc) {
+    std::vector<int> cores;
+    std::vector<std::string> ranges = split(coreDesc, ',');
+    for (size_t i = 0; i < ranges.size(); i++) {
+        if (ranges[i].find("-") == std::string::npos)
+            cores.push_back(atoi(ranges[i].c_str()));
+        else {
+            auto bounds = split(ranges[i], '-');
+            for (int k = atoi(bounds[0].c_str()); k <= atoi(bounds[1].c_str());
+                    k++)
+                cores.push_back(k);
+        }
+    }
+    return cores;
+}
+
+/**
+ * Return all the cores that the current process has access to.
+ */
+std::vector<int> getAllUseableCores() {
+    FILE *fp;
+    char path[1024];
+
+    fp = popen("cat /sys/fs/cgroup/cpuset$(cat /proc/self/cpuset)/cpuset.cpus", "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n" );
+        exit(1);
+    }
+    if (fgets(path, sizeof(path)-1, fp) == NULL) {
+        fprintf(stderr, "No cores found!\n");
+        return std::vector<int>();
+    }
+    return parseRanges(path);
+}
 
 } // namespace Util
 } // namespace DDTrace
