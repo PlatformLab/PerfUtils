@@ -13,14 +13,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sstream>
-
-#include "Util.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
+
+#include <sstream>
 #include <string>
+#include <mutex>
+
+#include "Util.h"
 
 #define CACHE_LINE_SIZE 64
+#define gettid() syscall(SYS_gettid)
 
 using std::string;
 
@@ -190,6 +194,25 @@ void* cacheAlignAlloc(size_t size) {
         return temp;
     }
     return NULL;
+}
+
+/**
+ * This function pins the current thread to a unique core in the cpuset of the
+ * current process. If called more times than the number of cores in the cpuset
+ * of the current process, this function is a no-op.
+ */
+void pinAvailableCore() {
+    static std::vector<int> cores = getAllUseableCores();
+    static std::mutex coreAllocMutex;
+    coreAllocMutex.lock();
+    if (cores.empty()) {
+        coreAllocMutex.unlock();
+        return;
+    }
+    int coreId = cores.back();
+    cores.pop_back();
+    coreAllocMutex.unlock();
+    pinThreadToCore(coreId);
 }
 
 } // namespace Util

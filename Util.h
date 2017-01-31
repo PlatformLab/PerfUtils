@@ -45,6 +45,7 @@ std::vector<std::string> split(const std::string &s, char delim);
 std::vector<int> parseRanges(const char* coreDesc);
 std::vector<int> getAllUseableCores();
 void* cacheAlignAlloc(size_t size);
+void pinAvailableCore();
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))
