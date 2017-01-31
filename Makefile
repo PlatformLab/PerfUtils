@@ -3,6 +3,7 @@ INCLUDES=CacheTrace.h TimeTrace.h Cycles.h Util.h
 OBJECTS:=$(SRCS:.cpp=.o)
 
 
+default: libPerfUtils.a
 
 all: libPerfUtils.so libPerfUtils.a
 
