@@ -14,6 +14,9 @@ for i in $(ps aux | awk '{print $2}'); do
     echo $i > cgroup.procs 2> /dev/null
 done
 
-# Remove all the cpusets
-rmdir /sys/fs/cgroup/cpuset/* 2> /dev/null
+# Recursively remove all the cpusets
+while [[ -n "$(find /sys/fs/cgroup/cpuset/ -type d -and -not -wholename /sys/fs/cgroup/cpuset/)" ]]
+do
+    find /sys/fs/cgroup/cpuset/ -type d -and -not -wholename /sys/fs/cgroup/cpuset/  -exec rmdir {} \; 2> /dev/null
+done
 ls /sys/fs/cgroup/cpuset/
