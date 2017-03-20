@@ -194,8 +194,7 @@ TimeTrace::reset()
 }
 
 /**
- * This private method does most of the work for both printToLog and
- * getTrace.
+ * This private method does most of the work for both print and getTrace.
  *
  * \param buffers
  *      Contains one or more TimeTrace::Buffers, whose contents will be merged

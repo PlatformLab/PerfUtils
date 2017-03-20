@@ -142,7 +142,6 @@ class TimeTrace {
         ~Buffer();
         std::string getTrace();
         void print();
-        void printToLog();
         void record(uint64_t timestamp, const char* format, uint32_t arg0 = 0,
                 uint32_t arg1 = 0, uint32_t arg2 = 0, uint32_t arg3 = 0);
         void record(const char* format, uint32_t arg0 = 0, uint32_t arg1 = 0,

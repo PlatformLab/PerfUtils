@@ -93,8 +93,7 @@ void CacheTrace::reset()
 }
 
 /**
- * This private method does most of the work for both printToLog and
- * getTrace.
+ * This private method does most of the work for both print and getTrace.
  *
  * \param s
  *      If non-NULL, refers to a string that will hold a printout of the
