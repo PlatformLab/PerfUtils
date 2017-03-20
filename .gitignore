@@ -2,6 +2,7 @@
 *.a
 *.log
 *.txt
-TTTest
+TimeTraceTest
+tags
 libPerfUtils.so
 libPerfUtils.so.0.0

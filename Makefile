@@ -16,8 +16,8 @@ libPerfUtils.a: $(SRCS) $(INCLUDES)
 	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
 	ar -cvq libPerfUtils.a $(OBJECTS)
 
-TimeTraceTest: TimeTraceTest.cpp
-	g++ -o TimeTraceTest -std=c++0x  TimeTraceTest.cpp TimeTrace.cpp Cycles.cpp
+TimeTraceTest: TimeTraceTest.cpp TimeTrace.cpp Cycles.cpp
+	g++ -o TimeTraceTest -std=c++0x $^
 
 clean:
 	rm -f libPerfUtils.a TimeTraceTest *.o *.gch *.log libPerfUtils.so \
