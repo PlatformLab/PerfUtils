@@ -31,21 +31,41 @@ import string
 import sys
 
 Event = namedtuple('Event', ['timestamp', 'message'])
+Trace = namedtuple('Trace', ['trace', 'cyclesPerSecond', 'startCycles'])
 def parseTrace(f):
   traceOutput = []
+  cyclesPerSecond = 0
+  startCycles = 0
   with open(f) as trace:
       for line in trace:
+        if 'CYCLES_PER_SECOND' in line:
+            cyclesPerSecond = float(line.strip().split()[1])
+            continue
+        if 'START_CYCLES' in line:
+            startCycles = int(line.strip().split()[1])
+            continue
         match = re.match(' *([0-9.]+) ns \(\+ *([0-9.]+) ns\): (.*)', line)
         if not match: continue
         thisEventTime = float(match.group(1))
         thisEvent = match.group(3)
         traceOutput.append(Event(thisEventTime, thisEvent))
-  return traceOutput
+  return Trace(traceOutput, cyclesPerSecond, startCycles)
 
 def main():
-  traces = []
+  rawTraces = []
   for i in sys.argv[1:]:
-    traces.append(parseTrace(i))
+    rawTraces.append(parseTrace(i))
+
+  if not rawTraces: return
+
+  # Adjust traces using the same estimate of cyclesPerSecond, so that we can
+  # line them up.
+  traces = []
+  cyclesPerSecond = rawTraces[0].cyclesPerSecond
+  for rawTrace in rawTraces:
+    delta = rawTrace.startCycles / cyclesPerSecond * 1e9
+    traces.append([Event(x.timestamp + delta, x.message) for x in rawTrace.trace])
+
 
   # The merge algorithm is similar to the merge used within a single TimeTrace
   # between threads. In particular, it starts at the most recent of the oldest
@@ -54,10 +74,15 @@ def main():
   for trace in traces:
     if trace[0].timestamp > startTime:
       startTime = trace[0].timestamp
+
   # Remove all events before the starting time.
   for trace in traces:
     while len(trace) > 0 and trace[0].timestamp < startTime:
       trace.pop(0)
+
+  # Make it possible to do further merges with this trace if we are interested.
+  print("CYCLES_PER_SECOND %f" % cyclesPerSecond)
+  print("START_CYCLES %d" % int(startTime / 1e9 * cyclesPerSecond))
 
   # Each iteration through this loop processes one event (the one with
   # the earliest timestamp).
@@ -73,7 +98,8 @@ def main():
     if not chosenTrace:
       break
     event = chosenTrace.pop(0)
-    print('%8.1f ns (+%6.1f ns): %s' % (event.timestamp, event.timestamp - prevTime, event.message))
+    print('%8.1f ns (+%6.1f ns): %s' % (event.timestamp - startTime, \
+        event.timestamp - prevTime, event.message))
     prevTime = event.timestamp
 
 if __name__ == "__main__":
