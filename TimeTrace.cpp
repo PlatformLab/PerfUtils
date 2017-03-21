@@ -284,6 +284,22 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
             // None of the traces have any more events to process.
             break;
         }
+        if (!printedAnything) {
+            // Print out both cyclesPerSec and the cycle counter for the
+            // starting time. These two values will allow us to merge two
+            // TimeTrace based in nanoseconds. The alternative is to output raw
+            // cycle counts instead of nanoseconds, because the error in
+            // converting from the former to the latter is magnified too much
+            // by the sheer size of the cycle counter.
+            char message[200];
+            sprintf(message, "CYCLES_PER_SECOND %f\nSTART_CYCLES %lu\n",
+                    Cycles::perSecond(), startTime);
+            if (s != NULL) {
+                s->append(message);
+            } else {
+                fprintf(output, message);
+            }
+        }
         printedAnything = true;
         buffer = buffers->at(currentBuffer);
         event = &buffer->events[current[currentBuffer]];
