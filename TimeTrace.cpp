@@ -263,7 +263,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
 
     // Each iteration through this loop processes one event (the one with
     // the earliest timestamp).
-    double prevTime = Cycles::toSeconds(startTime) * 1e09;
+    double prevTime = startTime;
     while (1) {
         TimeTrace::Buffer* buffer;
         Event* event;
@@ -291,7 +291,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
                 % Buffer::BUFFER_SIZE;
 
         char message[1000];
-        double ns = Cycles::toSeconds(event->timestamp) * 1e09;
+        double ns = event->timestamp;
         if (s != NULL) {
             if (s->length() != 0) {
                 s->append("\n");
