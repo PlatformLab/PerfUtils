@@ -13,6 +13,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define private public
 #include "TimeTrace.h"
 
 
@@ -324,6 +325,15 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
         } else {
             fprintf(output, "No time trace events to print");
         }
+    }
+
+    // Print out the cyclesPerSec estimate for debugging.
+    char message[200];
+    sprintf(message, "CYCLES_PER_SECOND_ESTIMATE %f\n", Cycles::cyclesPerSec);
+    if (s != NULL) {
+        s->append(message);
+    } else {
+        fprintf(output, message);
     }
 
     for (uint32_t i = 0; i < buffers->size(); i++) {
