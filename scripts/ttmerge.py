@@ -61,10 +61,12 @@ def main():
   # Adjust traces using the same estimate of cyclesPerSecond, so that we can
   # line them up.
   traces = []
-  cyclesPerSecond = rawTraces[0].cyclesPerSecond
+  cyclesPerSecond = min(x.cyclesPerSecond for x in rawTraces)
   for rawTrace in rawTraces:
     delta = rawTrace.startCycles / cyclesPerSecond * 1e9
-    traces.append([Event(x.timestamp + delta, x.message) for x in rawTrace.trace])
+    traces.append(
+      [Event(x.timestamp * rawTrace.cyclesPerSecond / cyclesPerSecond + delta,
+             x.message) for x in rawTrace.trace])
 
 
   # The merge algorithm is similar to the merge used within a single TimeTrace
