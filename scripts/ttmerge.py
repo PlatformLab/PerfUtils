@@ -102,6 +102,8 @@ def main():
     event = chosenTrace.pop(0)
     print('%8.1f ns (+%6.1f ns): %s' % (event.timestamp - startTime, \
         event.timestamp - prevTime, event.message))
+    if not chosenTrace:
+      break
     prevTime = event.timestamp
 
 if __name__ == "__main__":
