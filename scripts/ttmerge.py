@@ -93,7 +93,11 @@ def main():
     chosenTrace = None
     earliestTime = sys.float_info.max;
     for trace in traces:
-      if len(trace) == 0: continue
+      # At least one empty trace means we have exhausted the earliest of the
+      # newest events in the trace.
+      if len(trace) == 0:
+        chosenTrace = None
+        break
       if trace[0].timestamp < earliestTime:
         earliestTime = trace[0].timestamp
         chosenTrace = trace
@@ -102,8 +106,6 @@ def main():
     event = chosenTrace.pop(0)
     print('%8.1f ns (+%6.1f ns): %s' % (event.timestamp - startTime, \
         event.timestamp - prevTime, event.message))
-    if not chosenTrace:
-      break
     prevTime = event.timestamp
 
 if __name__ == "__main__":
