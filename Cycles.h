@@ -48,12 +48,14 @@ class Cycles {
     }
 
     static __inline __attribute__((always_inline))
-    double 
+    double
     perSecond(){
         return getCyclesPerSec();
     }
     static double toSeconds(uint64_t cycles, double cyclesPerSec = 0);
     static uint64_t fromSeconds(double seconds, double cyclesPerSec = 0);
+    static uint64_t toMilliseconds(uint64_t cycles, double cyclesPerSec = 0);
+    static uint64_t fromMilliseconds(uint64_t ms, double cyclesPerSec = 0);
     static uint64_t toMicroseconds(uint64_t cycles, double cyclesPerSec = 0);
     static uint64_t toNanoseconds(uint64_t cycles, double cyclesPerSec = 0);
     static uint64_t fromNanoseconds(uint64_t ns, double cyclesPerSec = 0);
