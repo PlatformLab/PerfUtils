@@ -91,6 +91,12 @@ class TimeTrace {
         record(Cycles::rdtsc(), format, arg0, arg1, arg2, arg3);
     }
     static void reset();
+    /**
+      * When this bool is set, the print method in TimeTrace will use the
+      * earliest of the oldest events instead of the latest of the earliest
+      * events in each thread-local trace.
+      */
+    static bool keepOldEvents;
 
   protected:
     TimeTrace();

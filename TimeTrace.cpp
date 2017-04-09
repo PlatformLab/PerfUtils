@@ -22,6 +22,7 @@ namespace PerfUtils {
 __thread TimeTrace::Buffer* TimeTrace::threadBuffer = NULL;
 std::vector<TimeTrace::Buffer*> TimeTrace::threadBuffers;
 std::mutex TimeTrace::mutex;
+bool TimeTrace::keepOldEvents;
 const char* TimeTrace::filename = NULL;
 
 /**
@@ -243,11 +244,22 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
     // farther than trace B, skip the older events in trace A, since there
     // might have been related events that were once in trace B but have since
     // been overwritten).
-    uint64_t startTime = 0;
-    for (uint32_t i = 0; i < buffers->size(); i++) {
-        Event* event = &buffers->at(i)->events[current[i]];
-        if ((event->format != NULL) && (event->timestamp > startTime)) {
-            startTime = event->timestamp;
+    uint64_t startTime;
+    if (!keepOldEvents) {
+        startTime = 0;
+        for (uint32_t i = 0; i < buffers->size(); i++) {
+            Event* event = &buffers->at(i)->events[current[i]];
+            if ((event->format != NULL) && (event->timestamp > startTime)) {
+                startTime = event->timestamp;
+            }
+        }
+    } else {
+        startTime = ~0;
+        for (uint32_t i = 0; i < buffers->size(); i++) {
+            Event* event = &buffers->at(i)->events[current[i]];
+            if ((event->format != NULL) && (event->timestamp < startTime)) {
+                startTime = event->timestamp;
+            }
         }
     }
 
