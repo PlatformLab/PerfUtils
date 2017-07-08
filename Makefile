@@ -1,24 +1,33 @@
-SRCS=CacheTrace.cpp TimeTrace.cpp Cycles.cpp Util.cpp
-INCLUDES=CacheTrace.h TimeTrace.h Cycles.h Util.h
-OBJECTS:=$(SRCS:.cpp=.o)
+CC=g++
+OBJECT_DIR = obj
+SRC_DIR = src
+INCLUDE_DIR = include
+LIB_DIR = lib
+CFLAGS=-O3 -fPIC -std=c++0x
 
+OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o
+HEADER_NAMES=CacheTrace.h TimeTrace.h Cycles.h Util.h
 
-default: libPerfUtils.a
+OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
+HEADERS= $(patsubst %,$(SRC_DIR)/%,$(HEADER_NAMES))
 
-all: libPerfUtils.so libPerfUtils.a
+install: $(OBJECT_DIR)/libPerfUtils.so $(OBJECT_DIR)/libPerfUtils.a
+	mkdir -p lib include/PerfUtils
+	cp $(HEADERS) include/PerfUtils
+	cp $(OBJECT_DIR)/libPerfUtils.a $(OBJECT_DIR)/libPerfUtils.so lib
 
-libPerfUtils.so: $(SRCS) $(INCLUDES)
-	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
+$(OBJECT_DIR)/libPerfUtils.so: $(OBJECTS)
 	$(CC) -shared -Wl,-soname,libPerfUtils.so.0.0 -o $@ $(LDFLAGS) $(OBJECTS)
-	ln -f -s $@ libPerfUtils.so.0.0
+	ln -f -s $@ $(OBJECT_DIR)/libPerfUtils.so.0.0
 
-libPerfUtils.a: $(SRCS) $(INCLUDES)
-	g++  -O3 -c -fPIC -std=c++0x  $(SRCS)
-	ar -cvq libPerfUtils.a $(OBJECTS)
+$(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
+	ar -cvq $@ $(OBJECTS)
 
-TimeTraceTest: TimeTraceTest.cpp TimeTrace.cpp Cycles.cpp
-	g++ -o TimeTraceTest -std=c++0x $^
+$(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) $(OBJECT_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJECT_DIR):
+	mkdir -p $(OBJECT_DIR)
 
 clean:
-	rm -f libPerfUtils.a TimeTraceTest *.o *.gch *.log libPerfUtils.so \
-		libPerfUtils.so.0.0
+	rm -rf lib/ include/ obj/
