@@ -5,14 +5,9 @@ highly-performant software systems running on x86\_64.
 
 ## How to Use It
 
-1. Clone the repository into a subdirectory of your application.
-    
+1. Clone the repository.
+
         git clone https://github.com/PlatformLab/PerfUtils.git
-
-    Afterwards, your directory structure should look like this.
-
-       application_directory/
-           PerfUtils/
 
 2. Build the library.
 
@@ -20,9 +15,9 @@ highly-performant software systems running on x86\_64.
         make
         popd
 
-3. Instrument your application, including the header files for the utilities you would like to use.
+3. Instrument your application, including the header files for the utilities you would like to use, with a PerfUtils prefix.
 
-        #include "TimeTrace.h"
+        #include "PerfUtils/TimeTrace.h"
 
         using PerfUtils::TimeTrace;
 
@@ -36,8 +31,8 @@ highly-performant software systems running on x86\_64.
            TimeTrace::record("Hello world");
            TimeTrace::print();
         }
-        
+
 
 4. Build and link against PerfUtils.
-    
-        g++ -o Main -IPerfUtils -std=c++0x Main.cc  -LPerfUtils -lPerfUtils
+
+        g++ -o Main -Ipath/to/PerfUtils/include -std=c++0x Main.cc  -Lpath/to/PerfUtils/lib -lPerfUtils
