@@ -9,6 +9,7 @@ OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o
 
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 HEADERS= $(shell find src -name '*.h')
+DEP=$(OBJECTS:.o=.d)
 
 install: $(OBJECT_DIR)/libPerfUtils.so $(OBJECT_DIR)/libPerfUtils.a
 	mkdir -p lib include/PerfUtils
@@ -22,7 +23,12 @@ $(OBJECT_DIR)/libPerfUtils.so: $(OBJECTS)
 $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
 	ar -cvq $@ $(OBJECTS)
 
-$(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(OBJECT_DIR)
+-include $(DEP)
+
+$(OBJECT_DIR)/%.d: $(SRC_DIR)/%.cpp | $(OBJECT_DIR)
+	$(CC) $(CFLAGS) $< -MM -MT $(@:.d=.o) > $@
+
+$(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJECT_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJECT_DIR):
