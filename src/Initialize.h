@@ -57,7 +57,7 @@ class Initialize {
      *      function should normally contain an internal guard so that it
      *      only performs its initialization the first time it is invoked.
      */
-    Initialize(void (*func)()) {
+    explicit Initialize(void (*func)()) {
         (*func)();
     }
 
@@ -81,6 +81,6 @@ class Initialize {
     }
 };
 
-} // end RAMCloud
+} // namespace PerfUtils
 
 #endif  // PERFUTILS_INITIALIZE_H

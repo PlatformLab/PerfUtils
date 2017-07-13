@@ -40,7 +40,7 @@ namespace PerfUtils {
  */
 class CacheTrace {
   public:
-    CacheTrace(const char* filename);
+    explicit CacheTrace(const char* filename);
     ~CacheTrace();
     void record(const char* message,
             uint64_t lastLevelMissCount = Util::rdpmc(0));

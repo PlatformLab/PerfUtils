@@ -93,6 +93,6 @@ class Cycles {
     }
 };
 
-} // end DDTrace
+} // namespace PerfUtils
 
 #endif  // PERFUTILS_CYCLES_H

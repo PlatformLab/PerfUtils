@@ -16,10 +16,10 @@
 #ifndef PERFUTIL_TIMETRACE_H
 #define PERFUTIL_TIMETRACE_H
 
+#include <xmmintrin.h>
 #include <string>
 #include <vector>
 #include <mutex>
-#include <xmmintrin.h>
 
 #include "Atomic.h"
 #include "Cycles.h"
@@ -46,7 +46,7 @@ namespace PerfUtils {
 class TimeTrace {
   public:
     class Buffer;
-    static std::string getTrace(); 
+    static std::string getTrace();
 
     static void setOutputFileName(const char *filename) {
         TimeTrace::filename = filename;
@@ -129,7 +129,7 @@ class TimeTrace {
       uint32_t arg0;             // Argument that may be referenced by format
                                  // when printing out this event.
       uint32_t arg1;             // Argument that may be referenced by format
-                                 // when printing out this event.  
+                                 // when printing out this event.
       uint32_t arg2;             // Argument that may be referenced by format
                                  // when printing out this event.
       uint32_t arg3;             // Argument that may be referenced by format
@@ -179,6 +179,7 @@ class TimeTrace {
         TimeTrace::Event events[BUFFER_SIZE];
 
         friend class TimeTrace;
+      private:
         DISALLOW_COPY_AND_ASSIGN(Buffer);
     };
 };

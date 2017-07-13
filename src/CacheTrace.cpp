@@ -152,7 +152,8 @@ void CacheTrace::printInternal(std::string* s)
 CacheTrace* CacheTrace::globalTrace = NULL;
 
 /**
- * This method returns the single global instance of CacheTrace for those that want the global view.
+ * This method returns the single global instance of CacheTrace for those that
+ * want the global view.
  */
 CacheTrace* CacheTrace::getGlobalInstance() {
     if (!globalTrace) globalTrace = new CacheTrace("CacheTrace.log");

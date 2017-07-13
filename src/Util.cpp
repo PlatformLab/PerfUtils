@@ -168,7 +168,8 @@ std::vector<int> getAllUseableCores() {
     FILE *fp;
     char path[1024];
 
-    fp = popen("cat /sys/fs/cgroup/cpuset$(cat /proc/self/cpuset)/cpuset.cpus", "r");
+    fp = popen("cat /sys/fs/cgroup/cpuset$(cat /proc/self/cpuset)/cpuset.cpus",
+            "r");
     if (fp == NULL) {
         printf("Failed to run command\n" );
         exit(1);

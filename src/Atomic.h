@@ -221,6 +221,6 @@ class Atomic {
     volatile ValueType value;
 };
 
-} // end RAMCloud
+} // namespace PerfUtils
 
 #endif  // PERFUTILS_ATOMIC_H

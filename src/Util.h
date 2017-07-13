@@ -183,9 +183,9 @@ serialReadPmc(int ecx)
     abort(); \
 } while (0)
 
-} // end Util
+} // namespace Util
 
-} // end PerfUtils
+} // namespace PerfUtils
 
 #undef FORCE_INLINE
 #endif  // PERFUTIL_UTIL_H

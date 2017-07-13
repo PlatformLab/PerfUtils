@@ -60,7 +60,8 @@ Cycles::init() {
     oldCycles = 0;
     while (1) {
         if (gettimeofday(&startTime, NULL) != 0) {
-            PERFUTILS_DIE("Cycles::init couldn't read clock: %s", strerror(errno));
+            PERFUTILS_DIE("Cycles::init couldn't read clock: %s",
+                    strerror(errno));
         }
         startCycles = rdtsc();
         while (1) {
