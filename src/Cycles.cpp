@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014 Stanford University
+/* Copyright (c) 2011-2017 Stanford University
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,15 +13,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "Cycles.h"
+
 #include <errno.h>
 #include <sys/time.h>
-#include <string>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <string>
 
-#include "Cycles.h"
 #include "Initialize.h"
 #include "Util.h"
 
@@ -264,4 +265,4 @@ Cycles::sleep(uint64_t us)
     uint64_t stop = Cycles::rdtsc() + Cycles::fromNanoseconds(1000*us);
     while (Cycles::rdtsc() < stop);
 }
-} // end PerfUtils
+} // namespace PerfUtils

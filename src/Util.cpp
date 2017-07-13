@@ -13,6 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "Util.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -20,8 +22,6 @@
 #include <sstream>
 #include <string>
 #include <mutex>
-
-#include "Util.h"
 
 #define CACHE_LINE_SIZE 64
 #define gettid() syscall(SYS_gettid)
@@ -149,9 +149,9 @@ std::vector<int> parseRanges(const char* coreDesc) {
     std::vector<int> cores;
     std::vector<std::string> ranges = split(coreDesc, ',');
     for (size_t i = 0; i < ranges.size(); i++) {
-        if (ranges[i].find("-") == std::string::npos)
+        if (ranges[i].find("-") == std::string::npos) {
             cores.push_back(atoi(ranges[i].c_str()));
-        else {
+        } else {
             auto bounds = split(ranges[i], '-');
             for (int k = atoi(bounds[0].c_str()); k <= atoi(bounds[1].c_str());
                     k++)
@@ -171,7 +171,7 @@ std::vector<int> getAllUseableCores() {
     fp = popen("cat /sys/fs/cgroup/cpuset$(cat /proc/self/cpuset)/cpuset.cpus",
             "r");
     if (fp == NULL) {
-        printf("Failed to run command\n" );
+        printf("Failed to run command\n");
         exit(1);
     }
     if (fgets(path, sizeof(path)-1, fp) == NULL) {
@@ -217,4 +217,4 @@ void pinAvailableCore() {
 }
 
 } // namespace Util
-} // namespace DDTrace
+} // namespace PerfUtils

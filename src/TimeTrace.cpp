@@ -304,8 +304,9 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
             // converting from the former to the latter is magnified too much
             // by the sheer size of the cycle counter.
             char message[200];
-            sprintf(message, "CYCLES_PER_SECOND %f\nSTART_CYCLES %lu\n",
-                    Cycles::perSecond(), startTime);
+            snprintf(message, sizeof(message),
+                     "CYCLES_PER_SECOND %f\nSTART_CYCLES %lu\n",
+                     Cycles::perSecond(), startTime);
             if (s != NULL) {
                 s->append(message);
             } else {
@@ -361,4 +362,4 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
         fclose(output);
 }
 
-} // namespace RAMCloud
+} // namespace PerfUtils

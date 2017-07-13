@@ -8,7 +8,7 @@ CFLAGS=-O3 -fPIC -std=c++0x
 # Stuff needed for make check
 TOP := $(shell echo $${PWD-`pwd`})
 ifndef CHECK_TARGET
-CHECK_TARGET=$$(find $(SRC_DIR) '(' -name '*.h' -or -name '*.cc' ')' -not -path '$(TOP)/googletest/*' )
+CHECK_TARGET=$$(find $(SRC_DIR) '(' -name '*.h' -or -name '*.cpp' ')' -not -path '$(TOP)/googletest/*' )
 endif
 
 OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o
