@@ -46,3 +46,5 @@ check:
 
 clean:
 	rm -rf lib/ include/ obj/
+
+.PHONY: install check clean
