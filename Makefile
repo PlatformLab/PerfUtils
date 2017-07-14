@@ -11,7 +11,7 @@ ifndef CHECK_TARGET
 CHECK_TARGET=$$(find $(SRC_DIR) '(' -name '*.h' -or -name '*.cc' ')' -not -path '$(TOP)/googletest/*' )
 endif
 
-OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o
+OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o Stats.o mkdir.o
 
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 HEADERS= $(shell find src -name '*.h')
@@ -41,7 +41,7 @@ $(OBJECT_DIR):
 	mkdir -p $(OBJECT_DIR)
 
 check:
-	scripts/cpplint.py --filter=-runtime/threadsafe_fn,-readability/streams,-whitespace/blank_line,-whitespace/braces,-whitespace/comments,-runtime/arrays,-build/include_what_you_use,-whitespace/semicolon $(CHECK_TARGET)
+	scripts/cpplint.py --filter=-runtime/threadsafe_fn,-readability/streams,-whitespace/blank_line,-whitespace/braces,-whitespace/comments,-runtime/arrays,-build/include_what_you_use,-whitespace/semicolon,-build/include $(CHECK_TARGET)
 	! grep '.\{81\}' $(SRC_DIR)/*.h $(SRC_DIR)/*.cc
 
 clean:
