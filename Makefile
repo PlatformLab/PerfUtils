@@ -1,8 +1,10 @@
+DESTDIR ?= .
+
 CC=g++
 OBJECT_DIR = obj
 SRC_DIR = src
-INCLUDE_DIR = include
-LIB_DIR = lib
+INCLUDE_DIR = $(DESTDIR)/include
+LIB_DIR = $(DESTDIR)/lib
 CFLAGS=-O3 -fPIC -std=c++0x
 
 # Stuff needed for make check
@@ -18,9 +20,9 @@ HEADERS= $(shell find src -name '*.h')
 DEP=$(OBJECTS:.o=.d)
 
 install: $(OBJECT_DIR)/libPerfUtils.so $(OBJECT_DIR)/libPerfUtils.a
-	mkdir -p lib include/PerfUtils
-	cp $(HEADERS) include/PerfUtils
-	cp $(OBJECT_DIR)/libPerfUtils.a $(OBJECT_DIR)/libPerfUtils.so lib
+	mkdir -p $(LIB_DIR) $(INCLUDE_DIR)/PerfUtils
+	cp $(HEADERS) $(INCLUDE_DIR)/PerfUtils
+	cp $(OBJECT_DIR)/libPerfUtils.a $(OBJECT_DIR)/libPerfUtils.so $(LIB_DIR)
 
 $(OBJECT_DIR)/libPerfUtils.so: $(OBJECTS)
 	$(CC) -shared -Wl,-soname,libPerfUtils.so.0.0 -o $@ $(LDFLAGS) $(OBJECTS)
@@ -45,6 +47,6 @@ check:
 	! grep '.\{81\}' $(SRC_DIR)/*.h $(SRC_DIR)/*.cc
 
 clean:
-	rm -rf lib/ include/ obj/
+	rm -rf $(LIB_DIR) $(INCLUDE_DIR) $(OBJECT_DIR)
 
 .PHONY: install check clean
