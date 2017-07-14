@@ -317,7 +317,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
         buffer = buffers->at(currentBuffer);
         event = &buffer->events[current[currentBuffer]];
         current[currentBuffer] = (current[currentBuffer] + 1)
-                % Buffer::BUFFER_SIZE;
+                & Buffer::BUFFER_MASK;
 
         char message[1000];
         double ns = Cycles::toSeconds(event->timestamp - startTime) * 1e09;
