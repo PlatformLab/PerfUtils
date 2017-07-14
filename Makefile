@@ -8,7 +8,7 @@ CFLAGS=-O3 -fPIC -std=c++0x
 # Stuff needed for make check
 TOP := $(shell echo $${PWD-`pwd`})
 ifndef CHECK_TARGET
-CHECK_TARGET=$$(find $(SRC_DIR) '(' -name '*.h' -or -name '*.cpp' ')' -not -path '$(TOP)/googletest/*' )
+CHECK_TARGET=$$(find $(SRC_DIR) '(' -name '*.h' -or -name '*.cc' ')' -not -path '$(TOP)/googletest/*' )
 endif
 
 OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o
@@ -31,10 +31,10 @@ $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
 
 -include $(DEP)
 
-$(OBJECT_DIR)/%.d: $(SRC_DIR)/%.cpp | $(OBJECT_DIR)
+$(OBJECT_DIR)/%.d: $(SRC_DIR)/%.cc | $(OBJECT_DIR)
 	$(CC) $(CFLAGS) $< -MM -MT $(@:.d=.o) > $@
 
-$(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJECT_DIR)
+$(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cc | $(OBJECT_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJECT_DIR):
@@ -42,7 +42,7 @@ $(OBJECT_DIR):
 
 check:
 	scripts/cpplint.py --filter=-runtime/threadsafe_fn,-readability/streams,-whitespace/blank_line,-whitespace/braces,-whitespace/comments,-runtime/arrays,-build/include_what_you_use,-whitespace/semicolon $(CHECK_TARGET)
-	! grep '.\{81\}' $(SRC_DIR)/*.h $(SRC_DIR)/*.cpp
+	! grep '.\{81\}' $(SRC_DIR)/*.h $(SRC_DIR)/*.cc
 
 clean:
 	rm -rf lib/ include/ obj/
