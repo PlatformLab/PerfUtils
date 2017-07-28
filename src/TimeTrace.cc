@@ -23,7 +23,7 @@ __thread TimeTrace::Buffer* TimeTrace::threadBuffer = NULL;
 std::vector<TimeTrace::Buffer*> TimeTrace::threadBuffers;
 std::mutex TimeTrace::mutex;
 bool TimeTrace::keepOldEvents;
-const char* TimeTrace::filename = NULL;
+std::string TimeTrace::filename;
 
 /**
  * Creates a thread-private TimeTrace::Buffer object for the current thread,
@@ -58,6 +58,18 @@ TimeTrace::getTrace()
     }
     TimeTrace::printInternal(&buffers, &s);
     return s;
+}
+
+/**
+ * Specify the file to which TimeTrace::print will write.
+ *
+ * \param filename
+ *      Name of the file to which TimeTrace::print will write.
+ */
+void
+TimeTrace::setOutputFileName(const char *filename) {
+    std::lock_guard<std::mutex> guard(mutex);
+    TimeTrace::filename = filename;
 }
 
 /**
@@ -218,7 +230,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
     // Initialize file for writing
     FILE* output = NULL;
     if (s == NULL)
-        output = filename ? fopen(filename, "a") : stdout;
+        output = filename.empty() ? stdout : fopen(filename.c_str(), "a");
 
     // Holds the index of the next event to consider from each trace.
     std::vector<int> current;

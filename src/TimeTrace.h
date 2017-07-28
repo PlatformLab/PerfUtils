@@ -48,9 +48,7 @@ class TimeTrace {
     class Buffer;
     static std::string getTrace();
 
-    static void setOutputFileName(const char *filename) {
-        TimeTrace::filename = filename;
-    }
+    static void setOutputFileName(const char *filename);
     static void print();
 
     /**
@@ -115,9 +113,9 @@ class TimeTrace {
     // Provides mutual exclusion on threadBuffers.
     static std::mutex mutex;
 
-    // The name of the file to write records into. If it is null, then we will
+    // The name of the file to write records into. If it is empty, then we will
     // write to stdout
-    static const char* filename;
+    static std::string filename;
 
     /**
      * This structure holds one entry in the TimeTrace.
@@ -187,4 +185,3 @@ class TimeTrace {
 } // namespace PerfUtils
 
 #endif // PERFUTIL_TIMETRACE_H
-
