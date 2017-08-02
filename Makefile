@@ -29,7 +29,7 @@ $(OBJECT_DIR)/libPerfUtils.so: $(OBJECTS)
 	ln -f -s $@ $(OBJECT_DIR)/libPerfUtils.so.0.0
 
 $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
-	ar -cvq $@ $(OBJECTS)
+	ar cvr $@ $(OBJECTS)
 
 -include $(DEP)
 
