@@ -46,6 +46,7 @@ std::vector<int> parseRanges(const char* coreDesc);
 std::vector<int> getAllUseableCores();
 void* cacheAlignAlloc(size_t size);
 void pinAvailableCore();
+int getPhysicalCore(int coreId);
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))
@@ -78,7 +79,7 @@ rdpmc(int ecx)
 /**
   * Returns the thread id of the calling thread
   * As long as the thread continues to run, this id is unique across all threads
-  * running ont he system so it can be used to uniquely name per-thread 
+  * running on the system so it can be used to uniquely name per-thread 
   * resources
   */
 static

@@ -216,5 +216,23 @@ void pinAvailableCore() {
     pinThreadToCore(coreId);
 }
 
+/**
+  * Returns the CPU ID of the physical core corresponding to coreId.
+  * The physical core is defined as the lowest-numbered sibling of coreId.
+  *
+  * \param coreId
+  *     The coreId whose hypertwin's ID will be returned.
+  */
+int getPhysicalCore(int coreId) {
+    // This file contains the siblings of core coreId.
+    std::string siblingFilePath = "/sys/devices/system/cpu/cpu" + std::to_string(coreId) + "/topology/thread_siblings_list";
+    FILE* siblingFile = fopen(siblingFilePath.c_str(), "r");
+    int physicalCoreId;
+    // The first cpuid in the file is always that of the physical core
+    fscanf(siblingFile, "%d", &physicalCoreId);
+    return physicalCoreId;
+}
+
+
 } // namespace Util
 } // namespace PerfUtils
