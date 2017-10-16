@@ -5,7 +5,7 @@ OBJECT_DIR = obj
 SRC_DIR = src
 INCLUDE_DIR = $(DESTDIR)/include
 LIB_DIR = $(DESTDIR)/lib
-CFLAGS=-O3 -fPIC -std=c++0x
+CFLAGS=-O3 -DNDEBUG -fPIC -std=c++0x
 
 # Stuff needed for make check
 TOP := $(shell echo $${PWD-`pwd`})
@@ -19,14 +19,10 @@ OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 HEADERS= $(shell find src -name '*.h')
 DEP=$(OBJECTS:.o=.d)
 
-install: $(OBJECT_DIR)/libPerfUtils.so $(OBJECT_DIR)/libPerfUtils.a
+install: $(OBJECT_DIR)/libPerfUtils.a
 	mkdir -p $(LIB_DIR) $(INCLUDE_DIR)/PerfUtils
 	cp $(HEADERS) $(INCLUDE_DIR)/PerfUtils
-	cp $(OBJECT_DIR)/libPerfUtils.a $(OBJECT_DIR)/libPerfUtils.so $(LIB_DIR)
-
-$(OBJECT_DIR)/libPerfUtils.so: $(OBJECTS)
-	$(CC) -shared -Wl,-soname,libPerfUtils.so.0.0 -o $@ $(LDFLAGS) $(OBJECTS)
-	ln -f -s $@ $(OBJECT_DIR)/libPerfUtils.so.0.0
+	cp $(OBJECT_DIR)/libPerfUtils.a $(LIB_DIR)
 
 $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
 	ar cvr $@ $(OBJECTS)
