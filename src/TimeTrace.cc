@@ -322,7 +322,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
             if (s != NULL) {
                 s->append(message);
             } else {
-                fprintf(output, message);
+                fprintf(output, "%s", message);
             }
         }
         printedAnything = true;
