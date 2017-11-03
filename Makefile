@@ -1,6 +1,6 @@
 DESTDIR ?= .
 
-CC=g++
+CXX ?= g++
 OBJECT_DIR = obj
 SRC_DIR = src
 INCLUDE_DIR = $(DESTDIR)/include
@@ -30,10 +30,10 @@ $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
 -include $(DEP)
 
 $(OBJECT_DIR)/%.d: $(SRC_DIR)/%.cc | $(OBJECT_DIR)
-	$(CC) $(CFLAGS) $< -MM -MT $(@:.d=.o) > $@
+	$(CXX) $(CFLAGS) $< -MM -MT $(@:.d=.o) > $@
 
 $(OBJECT_DIR)/%.o: $(SRC_DIR)/%.cc | $(OBJECT_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) -c $< -o $@
 
 $(OBJECT_DIR):
 	mkdir -p $(OBJECT_DIR)
