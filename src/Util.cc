@@ -15,13 +15,13 @@
 
 #include "Util.h"
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
+#include <mutex>
 #include <sstream>
 #include <string>
-#include <mutex>
 
 #define CACHE_LINE_SIZE 64
 #define gettid() syscall(SYS_gettid)
@@ -30,16 +30,15 @@ using std::string;
 
 namespace PerfUtils {
 namespace Util {
-string format(const char* format, ...)
-    __attribute__((format(printf, 1, 2)));
+string
+format(const char* format, ...) __attribute__((format(printf, 1, 2)));
 
-string vformat(const char* format, va_list ap)
-    __attribute__((format(printf, 1, 0)));
+string
+vformat(const char* format, va_list ap) __attribute__((format(printf, 1, 0)));
 
 /// A safe version of sprintf.
 std::string
-format(const char* format, ...)
-{
+format(const char* format, ...) {
     va_list ap;
     va_start(ap, format);
     string s = vformat(format, ap);
@@ -49,8 +48,7 @@ format(const char* format, ...)
 
 /// A safe version of vprintf.
 string
-vformat(const char* format, va_list ap)
-{
+vformat(const char* format, va_list ap) {
     string s;
 
     // We're not really sure how big of a buffer will be necessary.
@@ -62,7 +60,7 @@ vformat(const char* format, va_list ap)
         va_list aq;
         __va_copy(aq, ap);
         int r = vsnprintf(buf, bufSize, format, aq);
-        assert(r >= 0); // old glibc versions returned -1
+        assert(r >= 0);  // old glibc versions returned -1
         if (r < bufSize) {
             s = buf;
             break;
@@ -79,9 +77,8 @@ vformat(const char* format, va_list ap)
  * Note that this exceeds 80 characters due to 64-bit offsets.
  */
 std::string
-hexDump(const void *buf, uint64_t bytes)
-{
-    const unsigned char *cbuf = reinterpret_cast<const unsigned char *>(buf);
+hexDump(const void* buf, uint64_t bytes) {
+    const unsigned char* cbuf = reinterpret_cast<const unsigned char*>(buf);
     uint64_t i, j;
 
     std::ostringstream output;
@@ -98,8 +95,7 @@ hexDump(const void *buf, uint64_t bytes)
                 snprintf(hex[j], sizeof(hex[0]), "  ");
                 ascii[j] = '\0';
             } else {
-                snprintf(hex[j], sizeof(hex[0]), "%02x",
-                    cbuf[i + j]);
+                snprintf(hex[j], sizeof(hex[0]), "%02x", cbuf[i + j]);
                 hex[j][sizeof(hex[0]) - 1] = '\0';
                 if (isprint(static_cast<int>(cbuf[i + j])))
                     ascii[j] = cbuf[i + j];
@@ -109,11 +105,12 @@ hexDump(const void *buf, uint64_t bytes)
         }
         ascii[sizeof(ascii) - 1] = '\0';
 
-        output <<
-            format("%s  %s %s %s %s %s %s %s %s  %s %s %s %s %s %s %s %s  "
-                   "|%s|\n", offset, hex[0], hex[1], hex[2], hex[3], hex[4],
-                   hex[5], hex[6], hex[7], hex[8], hex[9], hex[10], hex[11],
-                   hex[12], hex[13], hex[14], hex[15], ascii);
+        output << format(
+            "%s  %s %s %s %s %s %s %s %s  %s %s %s %s %s %s %s %s  "
+            "|%s|\n",
+            offset, hex[0], hex[1], hex[2], hex[3], hex[4], hex[5], hex[6],
+            hex[7], hex[8], hex[9], hex[10], hex[11], hex[12], hex[13], hex[14],
+            hex[15], ascii);
     }
     return output.str();
 }
@@ -122,7 +119,8 @@ hexDump(const void *buf, uint64_t bytes)
  * Split a string by the given single-character delimiter, and append the
  * split pieces into elems.
  */
-void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+void
+split(const std::string& s, char delim, std::vector<std::string>& elems) {
     std::stringstream ss;
     ss.str(s);
     std::string item;
@@ -135,7 +133,8 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
  * Split a string by the given single-character delimiter, and return the split
  * pieces into an std::vector<std::string>.
  */
-std::vector<std::string> split(const std::string &s, char delim) {
+std::vector<std::string>
+split(const std::string& s, char delim) {
     std::vector<std::string> elems;
     split(s, delim, elems);
     return elems;
@@ -145,7 +144,8 @@ std::vector<std::string> split(const std::string &s, char delim) {
  * Take a string containing comma-separated ranges of integers and return an
  * std::vector containing the numbers in each range.
  */
-std::vector<int> parseRanges(const char* coreDesc) {
+std::vector<int>
+parseRanges(const char* coreDesc) {
     std::vector<int> cores;
     std::vector<std::string> ranges = split(coreDesc, ',');
     for (size_t i = 0; i < ranges.size(); i++) {
@@ -154,7 +154,7 @@ std::vector<int> parseRanges(const char* coreDesc) {
         } else {
             auto bounds = split(ranges[i], '-');
             for (int k = atoi(bounds[0].c_str()); k <= atoi(bounds[1].c_str());
-                    k++)
+                 k++)
                 cores.push_back(k);
         }
     }
@@ -164,17 +164,18 @@ std::vector<int> parseRanges(const char* coreDesc) {
 /**
  * Return all the cores that the current process has access to.
  */
-std::vector<int> getAllUseableCores() {
-    FILE *fp;
+std::vector<int>
+getAllUseableCores() {
+    FILE* fp;
     char path[1024];
 
     fp = popen("cat /sys/fs/cgroup/cpuset$(cat /proc/self/cpuset)/cpuset.cpus",
-            "r");
+               "r");
     if (fp == NULL) {
         printf("Failed to run command\n");
         exit(1);
     }
-    if (fgets(path, sizeof(path)-1, fp) == NULL) {
+    if (fgets(path, sizeof(path) - 1, fp) == NULL) {
         fprintf(stderr, "No cores found!\n");
         return std::vector<int>();
     }
@@ -182,13 +183,14 @@ std::vector<int> getAllUseableCores() {
 }
 
 /**
-  * Allocate a block of memory aligned at the beginning of a cache line.
-  *
-  * \param size
-  *     The amount of memory to allocate.
-  */
-void* cacheAlignAlloc(size_t size) {
-    void *temp;
+ * Allocate a block of memory aligned at the beginning of a cache line.
+ *
+ * \param size
+ *     The amount of memory to allocate.
+ */
+void*
+cacheAlignAlloc(size_t size) {
+    void* temp;
     int result = posix_memalign(&temp, CACHE_LINE_SIZE, size);
     if (result == 0) {
         assert((reinterpret_cast<uint64_t>(temp) & (CACHE_LINE_SIZE - 1)) == 0);
@@ -202,7 +204,8 @@ void* cacheAlignAlloc(size_t size) {
  * current process. If called more times than the number of cores in the cpuset
  * of the current process, this function is a no-op.
  */
-void pinAvailableCore() {
+void
+pinAvailableCore() {
     static std::vector<int> cores = getAllUseableCores();
     static std::mutex coreAllocMutex;
     coreAllocMutex.lock();
@@ -217,15 +220,18 @@ void pinAvailableCore() {
 }
 
 /**
-  * Returns the CPU ID of the physical core corresponding to coreId.
-  * The physical core is defined as the lowest-numbered sibling of coreId.
-  *
-  * \param coreId
-  *     The coreId whose hypertwin's ID will be returned.
-  */
-int getPhysicalCore(int coreId) {
+ * Returns the CPU ID of the physical core corresponding to coreId.
+ * The physical core is defined as the lowest-numbered sibling of coreId.
+ *
+ * \param coreId
+ *     The coreId whose hypertwin's ID will be returned.
+ */
+int
+getPhysicalCore(int coreId) {
     // This file contains the siblings of core coreId.
-    std::string siblingFilePath = "/sys/devices/system/cpu/cpu" + std::to_string(coreId) + "/topology/thread_siblings_list";
+    std::string siblingFilePath = "/sys/devices/system/cpu/cpu" +
+                                  std::to_string(coreId) +
+                                  "/topology/thread_siblings_list";
     FILE* siblingFile = fopen(siblingFilePath.c_str(), "r");
     int physicalCoreId;
     // The first cpuid in the file is always that of the physical core
@@ -233,6 +239,5 @@ int getPhysicalCore(int coreId) {
     return physicalCoreId;
 }
 
-
-} // namespace Util
-} // namespace PerfUtils
+}  // namespace Util
+}  // namespace PerfUtils

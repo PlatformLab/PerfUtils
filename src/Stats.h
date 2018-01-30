@@ -16,8 +16,8 @@
 #ifndef PERFUTILS_STATS_H
 #define PERFUTILS_STATS_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 struct Statistics {
     size_t count;
@@ -39,13 +39,15 @@ struct Statistics {
     uint64_t max;
 };
 
+Statistics
+computeStatistics(uint64_t* rawdata, size_t count);
 
-Statistics computeStatistics(uint64_t* rawdata, size_t count);
+void
+printStatistics(const char* label, uint64_t* rawdata, size_t count,
+                const char* datadir = NULL);
 
-void printStatistics(const char* label, uint64_t* rawdata, size_t count,
-        const char* datadir = NULL);
-
-void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound,
-        uint64_t upperbound, uint64_t step);
+void
+printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound,
+               uint64_t upperbound, uint64_t step);
 
 #endif

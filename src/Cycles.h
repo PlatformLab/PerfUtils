@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 
-
 namespace PerfUtils {
 
 /**
@@ -34,22 +33,16 @@ class Cycles {
      * Return the current value of the fine-grain CPU cycle counter
      * (accessed via the RDTSC instruction).
      */
-    static __inline __attribute__((always_inline))
-    uint64_t
-    rdtsc()
-    {
+    static __inline __attribute__((always_inline)) uint64_t rdtsc() {
 #if TESTING
-        if (mockTscValue)
-            return mockTscValue;
+        if (mockTscValue) return mockTscValue;
 #endif
         uint32_t lo, hi;
-        __asm__ __volatile__("rdtscp" : "=a" (lo), "=d" (hi) : : "%rcx");
+        __asm__ __volatile__("rdtscp" : "=a"(lo), "=d"(hi) : : "%rcx");
         return (((uint64_t)hi << 32) | lo);
     }
 
-    static __inline __attribute__((always_inline))
-    double
-    perSecond(){
+    static __inline __attribute__((always_inline)) double perSecond() {
         return getCyclesPerSec();
     }
     static double toSeconds(uint64_t cycles, double cyclesPerSec = 0);
@@ -80,10 +73,7 @@ class Cycles {
      * Returns the conversion factor between cycles in seconds, using
      * a mock value for testing when appropriate.
      */
-    static __inline __attribute__((always_inline))
-    double
-    getCyclesPerSec()
-    {
+    static __inline __attribute__((always_inline)) double getCyclesPerSec() {
 #if TESTING
         if (mockCyclesPerSec != 0.0) {
             return mockCyclesPerSec;
@@ -93,6 +83,6 @@ class Cycles {
     }
 };
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
 #endif  // PERFUTILS_CYCLES_H

@@ -16,10 +16,10 @@
 #include "Cycles.h"
 
 #include <errno.h>
-#include <sys/time.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 #include <string>
 
@@ -42,8 +42,7 @@ static Initialize _(Cycles::init);
  */
 void
 Cycles::init() {
-    if (cyclesPerSec != 0)
-        return;
+    if (cyclesPerSec != 0) return;
 
     // Compute the frequency of the fine-grained CPU timer: to do this,
     // take parallel time readings using both rdtsc and gettimeofday.
@@ -62,35 +61,34 @@ Cycles::init() {
     while (1) {
         if (gettimeofday(&startTime, NULL) != 0) {
             PERFUTILS_DIE("Cycles::init couldn't read clock: %s",
-                    strerror(errno));
+                          strerror(errno));
         }
         startCycles = rdtsc();
         while (1) {
             if (gettimeofday(&stopTime, NULL) != 0) {
                 PERFUTILS_DIE("Cycles::init couldn't read clock: %s",
-                        strerror(errno));
+                              strerror(errno));
             }
             stopCycles = rdtsc();
             micros = (stopTime.tv_usec - startTime.tv_usec) +
-                    (stopTime.tv_sec - startTime.tv_sec)*1000000;
+                     (stopTime.tv_sec - startTime.tv_sec) * 1000000;
             if (micros > 10000) {
                 cyclesPerSec = static_cast<double>(stopCycles - startCycles);
-                cyclesPerSec = 1000000.0*cyclesPerSec/
-                        static_cast<double>(micros);
+                cyclesPerSec =
+                    1000000.0 * cyclesPerSec / static_cast<double>(micros);
                 break;
             }
         }
-        double delta = cyclesPerSec/1000.0;
+        double delta = cyclesPerSec / 1000.0;
         if ((oldCycles > (cyclesPerSec - delta)) &&
-                (oldCycles < (cyclesPerSec + delta))) {
+            (oldCycles < (cyclesPerSec + delta))) {
             goto exit;
         }
         oldCycles = cyclesPerSec;
     }
 
-    exit:
-        ;
-    //printf("Cycles per second: %f\n", cyclesPerSec);
+exit:;
+    // printf("Cycles per second: %f\n", cyclesPerSec);
 }
 
 /**
@@ -116,11 +114,9 @@ Cycles::perSecond()
  *      The time in seconds corresponding to cycles.
  */
 double
-Cycles::toSeconds(uint64_t cycles, double cyclesPerSec)
-{
-    if (cyclesPerSec == 0)
-        cyclesPerSec = getCyclesPerSec();
-    return static_cast<double>(cycles)/cyclesPerSec;
+Cycles::toSeconds(uint64_t cycles, double cyclesPerSec) {
+    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    return static_cast<double>(cycles) / cyclesPerSec;
 }
 
 /**
@@ -137,11 +133,9 @@ Cycles::toSeconds(uint64_t cycles, double cyclesPerSec)
  *      The approximate number of cycles corresponding to #seconds.
  */
 uint64_t
-Cycles::fromSeconds(double seconds, double cyclesPerSec)
-{
-    if (cyclesPerSec == 0)
-        cyclesPerSec = getCyclesPerSec();
-    return (uint64_t) (seconds*cyclesPerSec + 0.5);
+Cycles::fromSeconds(double seconds, double cyclesPerSec) {
+    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    return (uint64_t)(seconds * cyclesPerSec + 0.5);
 }
 
 /**
@@ -159,8 +153,7 @@ Cycles::fromSeconds(double seconds, double cyclesPerSec)
  *      The time in milliseconds corresponding to cycles (rounded).
  */
 uint64_t
-Cycles::toMilliseconds(uint64_t cycles, double cyclesPerSec)
-{
+Cycles::toMilliseconds(uint64_t cycles, double cyclesPerSec) {
     return toNanoseconds(cycles, cyclesPerSec) / 1e6;
 }
 
@@ -178,11 +171,9 @@ Cycles::toMilliseconds(uint64_t cycles, double cyclesPerSec)
  *      The approximate number of cycles for the same time length.
  */
 uint64_t
-Cycles::fromMilliseconds(uint64_t ms, double cyclesPerSec)
-{
-    if (cyclesPerSec == 0)
-        cyclesPerSec = getCyclesPerSec();
-    return (uint64_t) (static_cast<double>(ms)*cyclesPerSec/1000 + 0.5);
+Cycles::fromMilliseconds(uint64_t ms, double cyclesPerSec) {
+    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    return (uint64_t)(static_cast<double>(ms) * cyclesPerSec / 1000 + 0.5);
 }
 
 /**
@@ -200,8 +191,7 @@ Cycles::fromMilliseconds(uint64_t ms, double cyclesPerSec)
  *      The time in microseconds corresponding to cycles (rounded).
  */
 uint64_t
-Cycles::toMicroseconds(uint64_t cycles, double cyclesPerSec)
-{
+Cycles::toMicroseconds(uint64_t cycles, double cyclesPerSec) {
     return toNanoseconds(cycles, cyclesPerSec) / 1000;
 }
 
@@ -220,11 +210,9 @@ Cycles::toMicroseconds(uint64_t cycles, double cyclesPerSec)
  *      The time in nanoseconds corresponding to cycles (rounded).
  */
 uint64_t
-Cycles::toNanoseconds(uint64_t cycles, double cyclesPerSec)
-{
-    if (cyclesPerSec == 0)
-        cyclesPerSec = getCyclesPerSec();
-    return (uint64_t) (1e09*static_cast<double>(cycles)/cyclesPerSec + 0.5);
+Cycles::toNanoseconds(uint64_t cycles, double cyclesPerSec) {
+    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    return (uint64_t)(1e09 * static_cast<double>(cycles) / cyclesPerSec + 0.5);
 }
 
 /**
@@ -241,11 +229,9 @@ Cycles::toNanoseconds(uint64_t cycles, double cyclesPerSec)
  *      The approximate number of cycles for the same time length.
  */
 uint64_t
-Cycles::fromNanoseconds(uint64_t ns, double cyclesPerSec)
-{
-    if (cyclesPerSec == 0)
-        cyclesPerSec = getCyclesPerSec();
-    return (uint64_t) (static_cast<double>(ns)*cyclesPerSec/1e09 + 0.5);
+Cycles::fromNanoseconds(uint64_t ns, double cyclesPerSec) {
+    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    return (uint64_t)(static_cast<double>(ns) * cyclesPerSec / 1e09 + 0.5);
 }
 
 /**
@@ -260,9 +246,9 @@ Cycles::fromNanoseconds(uint64_t ns, double cyclesPerSec)
  *      Number of microseconds.
  */
 void
-Cycles::sleep(uint64_t us)
-{
-    uint64_t stop = Cycles::rdtsc() + Cycles::fromNanoseconds(1000*us);
-    while (Cycles::rdtsc() < stop);
+Cycles::sleep(uint64_t us) {
+    uint64_t stop = Cycles::rdtsc() + Cycles::fromNanoseconds(1000 * us);
+    while (Cycles::rdtsc() < stop)
+        ;
 }
-} // namespace PerfUtils
+}  // namespace PerfUtils

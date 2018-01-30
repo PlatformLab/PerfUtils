@@ -17,8 +17,8 @@
 #define PERFUTIL_CACHETRACE_H
 
 #include <string>
-#include "Cycles.h"
 #include "Atomic.h"
+#include "Cycles.h"
 #include "Util.h"
 
 namespace PerfUtils {
@@ -43,7 +43,7 @@ class CacheTrace {
     explicit CacheTrace(const char* filename);
     ~CacheTrace();
     void record(const char* message,
-            uint64_t lastLevelMissCount = Util::rdpmc(0));
+                uint64_t lastLevelMissCount = Util::rdpmc(0));
 
     /**
      * Simple wrapper for convenient serialized calls to readPmc, which will
@@ -65,14 +65,13 @@ class CacheTrace {
      * This structure holds one entry in the CacheTrace.
      */
     struct Event {
-      // Value of rdpmc output (cumulative count of last-level cache
-      // misses) when this event was recorded.
-      uint64_t count;
+        // Value of rdpmc output (cumulative count of last-level cache
+        // misses) when this event was recorded.
+        uint64_t count;
 
-      // Static string describing the event.  NULL means that this entry is
-      // unused.
-      const char* message;
-
+        // Static string describing the event.  NULL means that this entry is
+        // unused.
+        const char* message;
     };
 
     // Total number of events that we can retain at any given time.
@@ -93,7 +92,6 @@ class CacheTrace {
     static CacheTrace* globalTrace;
 };
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
-#endif // PERFUTIL_CACHETRACE_H
-
+#endif  // PERFUTIL_CACHETRACE_H

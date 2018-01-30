@@ -16,19 +16,19 @@
 #ifndef PERFUTIL_UTIL_H
 #define PERFUTIL_UTIL_H
 
-#include <time.h>
-#include <stdint.h>
-#include <sched.h>
-#include <assert.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
 #include <asm/unistd.h>
+#include <assert.h>
+#include <sched.h>
+#include <stdint.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <time.h>
+#include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
 
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace PerfUtils {
@@ -39,14 +39,22 @@ namespace PerfUtils {
  */
 namespace Util {
 
-std::string hexDump(const void *buffer, uint64_t bytes);
-void split(const std::string &s, char delim, std::vector<std::string> &elems);
-std::vector<std::string> split(const std::string &s, char delim);
-std::vector<int> parseRanges(const char* coreDesc);
-std::vector<int> getAllUseableCores();
-void* cacheAlignAlloc(size_t size);
-void pinAvailableCore();
-int getPhysicalCore(int coreId);
+std::string
+hexDump(const void* buffer, uint64_t bytes);
+void
+split(const std::string& s, char delim, std::vector<std::string>& elems);
+std::vector<std::string>
+split(const std::string& s, char delim);
+std::vector<int>
+parseRanges(const char* coreDesc);
+std::vector<int>
+getAllUseableCores();
+void*
+cacheAlignAlloc(size_t size);
+void
+pinAvailableCore();
+int
+getPhysicalCore(int coreId);
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))
@@ -67,26 +75,22 @@ int getPhysicalCore(int coreId);
  * 2. This function's behavior will change depending on which pmc's have been
  *    selected. The selection is done using wrmsr from inside a kernel module.
  */
-static
-uint64_t FORCE_INLINE
-rdpmc(int ecx)
-{
+static uint64_t FORCE_INLINE
+rdpmc(int ecx) {
     unsigned int a, d;
     __asm __volatile("rdpmc" : "=a"(a), "=d"(d) : "c"(ecx));
     return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
 /**
-  * Returns the thread id of the calling thread
-  * As long as the thread continues to run, this id is unique across all threads
-  * running on the system so it can be used to uniquely name per-thread 
-  * resources
-  */
-static
-pid_t FORCE_INLINE
-gettid()
-{
-    return static_cast<pid_t>(syscall( __NR_gettid ));
+ * Returns the thread id of the calling thread
+ * As long as the thread continues to run, this id is unique across all threads
+ * running on the system so it can be used to uniquely name per-thread
+ * resources
+ */
+static pid_t FORCE_INLINE
+gettid() {
+    return static_cast<pid_t>(syscall(__NR_gettid));
 }
 
 /**
@@ -96,13 +100,13 @@ gettid()
  * \param id
  *      The id of the core to pin the caller's thread to.
  */
-static FORCE_INLINE
-void pinThreadToCore(int id) {
+static FORCE_INLINE void
+pinThreadToCore(int id) {
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
-        CPU_SET(id, &cpuset);
-        assert(sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0);
+    CPU_SET(id, &cpuset);
+    assert(sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0);
 }
 
 /**
@@ -110,8 +114,8 @@ void pinThreadToCore(int id) {
  * cpu_set_t encodes information about which cores the current thread is
  * permitted to run on.
  */
-static FORCE_INLINE
-cpu_set_t getCpuAffinity() {
+static FORCE_INLINE cpu_set_t
+getCpuAffinity() {
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
@@ -128,34 +132,33 @@ cpu_set_t getCpuAffinity() {
  *      An object of type cpu_set_t which encodes the set of cores which
  *      current thread is permitted to run on.
  */
-static FORCE_INLINE
-void setCpuAffinity(cpu_set_t cpuset) {
+static FORCE_INLINE void
+setCpuAffinity(cpu_set_t cpuset) {
     assert(sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0);
 }
 
 /**
  * This function is used to seralize machine instructions so that no
  * instructions that appear after it in the current thread can run before any
- * instructions that appear before it. 
+ * instructions that appear before it.
  *
  * It is useful for putting around rdpmc instructions (to pinpoint cache
  * misses) as well as before rdtsc instructions, to prevent time pollution from
  * instructions supposed to be executing before the timer starts.
  */
-static FORCE_INLINE
-void serialize() {
+static FORCE_INLINE void
+serialize() {
     uint32_t eax, ebx, ecx, edx;
     __asm volatile("cpuid"
-        : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
-        : "a" (1U));
+                   : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                   : "a"(1U));
 }
 
-
 /**
-  * A compiler barrier preventing compiler reordering
-  */
-static FORCE_INLINE
-void barrier(){
+ * A compiler barrier preventing compiler reordering
+ */
+static FORCE_INLINE void
+barrier() {
     asm volatile("" : : : "memory");
 }
 
@@ -168,25 +171,24 @@ void barrier(){
  *      The index of the PMC register to read the value from. The correct
  *      value of this parameter is dependent on the selected pmc.
  */
-static FORCE_INLINE
-uint64_t
-serialReadPmc(int ecx)
-{
+static FORCE_INLINE uint64_t
+serialReadPmc(int ecx) {
     serialize();
     uint64_t retVal = rdpmc(ecx);
     serialize();
     return retVal;
 }
 
-#define PERFUTILS_DIE(format_, ...) do { \
-    fprintf(stderr, format_, ##__VA_ARGS__); \
-    fprintf(stderr, "%s:%d\n" , __FILE__, __LINE__); \
-    abort(); \
-} while (0)
+#define PERFUTILS_DIE(format_, ...)                     \
+    do {                                                \
+        fprintf(stderr, format_, ##__VA_ARGS__);        \
+        fprintf(stderr, "%s:%d\n", __FILE__, __LINE__); \
+        abort();                                        \
+    } while (0)
 
-} // namespace Util
+}  // namespace Util
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
 #undef FORCE_INLINE
 #endif  // PERFUTIL_UTIL_H

@@ -15,7 +15,6 @@
 
 #include "TimeTrace.h"
 
-
 using std::string;
 using std::vector;
 namespace PerfUtils {
@@ -30,8 +29,7 @@ std::string TimeTrace::filename;
  * if one doesn't already exist.
  */
 void
-TimeTrace::createThreadBuffer()
-{
+TimeTrace::createThreadBuffer() {
     std::lock_guard<std::mutex> guard(mutex);
     if (threadBuffer == NULL) {
         threadBuffer = new Buffer;
@@ -39,14 +37,12 @@ TimeTrace::createThreadBuffer()
     }
 }
 
-
 /**
  * Return a string containing all of the trace records from all of the
  * thread-local buffers.
  */
 string
-TimeTrace::getTrace()
-{
+TimeTrace::getTrace() {
     std::vector<TimeTrace::Buffer*> buffers;
     string s;
 
@@ -67,7 +63,7 @@ TimeTrace::getTrace()
  *      Name of the file to which TimeTrace::print will write.
  */
 void
-TimeTrace::setOutputFileName(const char *filename) {
+TimeTrace::setOutputFileName(const char* filename) {
     std::lock_guard<std::mutex> guard(mutex);
     TimeTrace::filename = filename;
 }
@@ -77,8 +73,7 @@ TimeTrace::setOutputFileName(const char *filename) {
  * stdout.
  */
 void
-TimeTrace::print()
-{
+TimeTrace::print() {
     std::vector<TimeTrace::Buffer*> buffers;
     {
         std::lock_guard<std::mutex> guard(mutex);
@@ -90,11 +85,7 @@ TimeTrace::print()
 /**
  * Construct a TimeTrace::Buffer.
  */
-TimeTrace::Buffer::Buffer()
-    : nextIndex(0)
-    , activeReaders(0)
-    , events()
-{
+TimeTrace::Buffer::Buffer() : nextIndex(0), activeReaders(0), events() {
     // Mark all of the events invalid.
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         events[i].format = NULL;
@@ -104,9 +95,7 @@ TimeTrace::Buffer::Buffer()
 /**
  * Destructor for TimeTrace::Buffer.
  */
-TimeTrace::Buffer::~Buffer()
-{
-}
+TimeTrace::Buffer::~Buffer() {}
 
 /**
  * Record an event in the buffer.
@@ -132,9 +121,9 @@ TimeTrace::Buffer::~Buffer()
  * \param arg3
  *      Argument to use when printing a message about this event.
  */
-void TimeTrace::Buffer::record(uint64_t timestamp, const char* format,
-        uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3)
-{
+void
+TimeTrace::Buffer::record(uint64_t timestamp, const char* format, uint32_t arg0,
+                          uint32_t arg1, uint32_t arg2, uint32_t arg3) {
     if (activeReaders > 0) {
         return;
     }
@@ -159,8 +148,8 @@ void TimeTrace::Buffer::record(uint64_t timestamp, const char* format,
 /**
  * Return a string containing a printout of the records in the buffer.
  */
-string TimeTrace::Buffer::getTrace()
-{
+string
+TimeTrace::Buffer::getTrace() {
     string s;
     std::vector<TimeTrace::Buffer*> buffers;
     buffers.push_back(this);
@@ -172,8 +161,8 @@ string TimeTrace::Buffer::getTrace()
  * Print all existing trace records to either a user-specified file or to
  * stdout.
  */
-void TimeTrace::Buffer::print()
-{
+void
+TimeTrace::Buffer::print() {
     std::vector<TimeTrace::Buffer*> buffers;
     buffers.push_back(this);
     printInternal(&buffers, NULL);
@@ -182,8 +171,8 @@ void TimeTrace::Buffer::print()
 /**
  * Discard any existing trace records.
  */
-void TimeTrace::Buffer::reset()
-{
+void
+TimeTrace::Buffer::reset() {
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         if (events[i].format == NULL) {
             break;
@@ -198,8 +187,7 @@ void TimeTrace::Buffer::reset()
  * primarily for unit testing.
  */
 void
-TimeTrace::reset()
-{
+TimeTrace::reset() {
     std::lock_guard<std::mutex> guard(mutex);
     for (uint32_t i = 0; i < TimeTrace::threadBuffers.size(); i++) {
         TimeTrace::threadBuffers[i]->reset();
@@ -220,8 +208,7 @@ TimeTrace::reset()
  *      time trace. If NULL, the trace will be printed on the system log.
  */
 void
-TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
-{
+TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s) {
     bool printedAnything = false;
     for (uint32_t i = 0; i < buffers->size(); i++) {
         buffers->at(i)->activeReaders.add(1);
@@ -279,8 +266,8 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
     for (uint32_t i = 0; i < buffers->size(); i++) {
         TimeTrace::Buffer* buffer = buffers->at(i);
         while ((buffer->events[current[i]].format != NULL) &&
-                (buffer->events[current[i]].timestamp < startTime) &&
-                (current[i] != buffer->nextIndex)) {
+               (buffer->events[current[i]].timestamp < startTime) &&
+               (current[i] != buffer->nextIndex)) {
             current[i] = (current[i] + 1) % Buffer::BUFFER_SIZE;
         }
     }
@@ -298,8 +285,8 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
         for (uint32_t i = 0; i < buffers->size(); i++) {
             buffer = buffers->at(i);
             event = &buffer->events[current[i]];
-            if ((current[i] != buffer->nextIndex) && (event->format != NULL)
-                    && (event->timestamp < earliestTime)) {
+            if ((current[i] != buffer->nextIndex) && (event->format != NULL) &&
+                (event->timestamp < earliestTime)) {
                 currentBuffer = static_cast<int>(i);
                 earliestTime = event->timestamp;
             }
@@ -328,8 +315,8 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
         printedAnything = true;
         buffer = buffers->at(currentBuffer);
         event = &buffer->events[current[currentBuffer]];
-        current[currentBuffer] = (current[currentBuffer] + 1)
-                & Buffer::BUFFER_MASK;
+        current[currentBuffer] =
+            (current[currentBuffer] + 1) & Buffer::BUFFER_MASK;
 
         char message[1000];
         double ns = Cycles::toSeconds(event->timestamp - startTime) * 1e09;
@@ -337,8 +324,8 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
             if (s->length() != 0) {
                 s->append("\n");
             }
-            snprintf(message, sizeof(message), "%8.1f ns (+%6.1f ns): ",
-                    ns, ns - prevTime);
+            snprintf(message, sizeof(message), "%8.1f ns (+%6.1f ns): ", ns,
+                     ns - prevTime);
             s->append(message);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
@@ -370,8 +357,7 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s)
     for (uint32_t i = 0; i < buffers->size(); i++) {
         buffers->at(i)->activeReaders.add(-1);
     }
-    if (output && output != stdout)
-        fclose(output);
+    if (output && output != stdout) fclose(output);
 }
 
-} // namespace PerfUtils
+}  // namespace PerfUtils

@@ -23,7 +23,7 @@ namespace PerfUtils {
  * before main() is invoked, such as the creation of static variables.  It
  * also provides a mechanism for handling dependencies (where one class
  * needs to perform its once-only initialization before another).
- * 
+ *
  * The simplest way to use an Initialize object is to define a static
  * initialization method for a class, say Foo::init().  Then, declare
  * a static Initialize object in the class:
@@ -57,9 +57,7 @@ class Initialize {
      *      function should normally contain an internal guard so that it
      *      only performs its initialization the first time it is invoked.
      */
-    explicit Initialize(void (*func)()) {
-        (*func)();
-    }
+    explicit Initialize(void (*func)()) { (*func)(); }
 
     /**
      * This form of constructor causes a new object of a particular class
@@ -73,7 +71,7 @@ class Initialize {
      *      it is replaced with a pointer to a newly allocated object of
      *      the given type.
      */
-    template<typename T>
+    template <typename T>
     explicit Initialize(T*& p) {
         if (p == NULL) {
             p = new T;
@@ -81,6 +79,6 @@ class Initialize {
     }
 };
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
 #endif  // PERFUTILS_INITIALIZE_H

@@ -17,9 +17,9 @@
 #define PERFUTIL_TIMETRACE_H
 
 #include <xmmintrin.h>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
 
 #include "Atomic.h"
 #include "Cycles.h"
@@ -29,7 +29,7 @@ namespace PerfUtils {
 // A macro to disallow the copy constructor and operator= functions
 #ifndef DISALLOW_COPY_AND_ASSIGN
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName&) = delete;             \
+    TypeName(const TypeName&) = delete;    \
     TypeName& operator=(const TypeName&) = delete;
 #endif
 
@@ -48,7 +48,7 @@ class TimeTrace {
     class Buffer;
     static std::string getTrace();
 
-    static void setOutputFileName(const char *filename);
+    static void setOutputFileName(const char* filename);
     static void print();
 
     /**
@@ -77,30 +77,31 @@ class TimeTrace {
      *      Argument to use when printing a message about this event.
      */
     static inline void record(uint64_t timestamp, const char* format,
-            uint32_t arg0 = 0, uint32_t arg1 = 0, uint32_t arg2 = 0,
-            uint32_t arg3 = 0) {
+                              uint32_t arg0 = 0, uint32_t arg1 = 0,
+                              uint32_t arg2 = 0, uint32_t arg3 = 0) {
         if (threadBuffer == NULL) {
             createThreadBuffer();
         }
         threadBuffer->record(timestamp, format, arg0, arg1, arg2, arg3);
     }
     static inline void record(const char* format, uint32_t arg0 = 0,
-            uint32_t arg1 = 0, uint32_t arg2 = 0, uint32_t arg3 = 0) {
+                              uint32_t arg1 = 0, uint32_t arg2 = 0,
+                              uint32_t arg3 = 0) {
         record(Cycles::rdtsc(), format, arg0, arg1, arg2, arg3);
     }
     static void reset();
     /**
-      * When this bool is set, the print method in TimeTrace will use the
-      * earliest of the oldest events instead of the latest of the earliest
-      * events in each thread-local trace.
-      */
+     * When this bool is set, the print method in TimeTrace will use the
+     * earliest of the oldest events instead of the latest of the earliest
+     * events in each thread-local trace.
+     */
     static bool keepOldEvents;
 
   protected:
     TimeTrace();
     static void createThreadBuffer();
     static void printInternal(std::vector<TimeTrace::Buffer*>* traces,
-            std::string* s);
+                              std::string* s);
 
     // Points to a private per-thread TimeTrace::Buffer object; NULL means
     // no such object has been created yet for the current thread.
@@ -121,17 +122,17 @@ class TimeTrace {
      * This structure holds one entry in the TimeTrace.
      */
     struct Event {
-      uint64_t timestamp;        // Time when a particular event occurred.
-      const char* format;        // Format string describing the event.
-                                 // NULL means that this entry is unused.
-      uint32_t arg0;             // Argument that may be referenced by format
-                                 // when printing out this event.
-      uint32_t arg1;             // Argument that may be referenced by format
-                                 // when printing out this event.
-      uint32_t arg2;             // Argument that may be referenced by format
-                                 // when printing out this event.
-      uint32_t arg3;             // Argument that may be referenced by format
-                                 // when printing out this event.
+        uint64_t timestamp;  // Time when a particular event occurred.
+        const char* format;  // Format string describing the event.
+                             // NULL means that this entry is unused.
+        uint32_t arg0;       // Argument that may be referenced by format
+                             // when printing out this event.
+        uint32_t arg1;       // Argument that may be referenced by format
+                             // when printing out this event.
+        uint32_t arg2;       // Argument that may be referenced by format
+                             // when printing out this event.
+        uint32_t arg3;       // Argument that may be referenced by format
+                             // when printing out this event.
     };
 
   public:
@@ -147,9 +148,9 @@ class TimeTrace {
         std::string getTrace();
         void print();
         void record(uint64_t timestamp, const char* format, uint32_t arg0 = 0,
-                uint32_t arg1 = 0, uint32_t arg2 = 0, uint32_t arg3 = 0);
+                    uint32_t arg1 = 0, uint32_t arg2 = 0, uint32_t arg3 = 0);
         void record(const char* format, uint32_t arg0 = 0, uint32_t arg1 = 0,
-                uint32_t arg2 = 0, uint32_t arg3 = 0) {
+                    uint32_t arg2 = 0, uint32_t arg3 = 0) {
             record(Cycles::rdtsc(), format, arg0, arg1, arg2, arg3);
         }
         void reset();
@@ -177,11 +178,12 @@ class TimeTrace {
         TimeTrace::Event events[BUFFER_SIZE];
 
         friend class TimeTrace;
+
       private:
         DISALLOW_COPY_AND_ASSIGN(Buffer);
     };
 };
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
-#endif // PERFUTIL_TIMETRACE_H
+#endif  // PERFUTIL_TIMETRACE_H

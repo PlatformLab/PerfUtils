@@ -24,12 +24,12 @@ namespace PerfUtils {
  * referent object size for Atomics that are pointers, and in units of
  * 1 for integer types.
  */
-template<typename T>
+template <typename T>
 struct AtomicStride {
     /// How much to add to the value when it is "incremented".
     static const unsigned int unitSize = 1;
 };
-template<typename T>
+template <typename T>
 struct AtomicStride<T*> {
     /// How much to add to the value when it is "incremented".
     static const unsigned int unitSize = sizeof(T);
@@ -47,11 +47,11 @@ struct AtomicStride<T*> {
  * class, because the C++ facilities incorporate expensive fence operations,
  * which often are not necessary.
  */
-template<typename ValueType>
+template <typename ValueType>
 class Atomic {
-    static_assert(sizeof(ValueType) == 4 ||
-                  sizeof(ValueType) == 8,
+    static_assert(sizeof(ValueType) == 4 || sizeof(ValueType) == 8,
                   "Atomic only works on 4- and 8-byte values!");
+
   public:
     /**
      * Construct an Atomic.
@@ -59,7 +59,7 @@ class Atomic {
      * \param value
      *      Initial value.
      */
-    explicit Atomic(const ValueType value = 0) : value(value) { }
+    explicit Atomic(const ValueType value = 0) : value(value) {}
 
     /**
      * Atomically increment the value by a given amount.
@@ -70,15 +70,17 @@ class Atomic {
      *      the reference objects. I.e. this produces the same effect as
      *      the C++ statement "value += increment;".
      */
-    void add(int64_t increment)
-    {
+    void add(int64_t increment) {
         if (sizeof(value) == 8) {
-            __asm__ __volatile__("lock; addq %1,%0" : "=m" (value) :
-                    "r" (increment*AtomicStride<ValueType>::unitSize));
+            __asm__ __volatile__(
+                "lock; addq %1,%0"
+                : "=m"(value)
+                : "r"(increment * AtomicStride<ValueType>::unitSize));
         } else {
-            __asm__ __volatile__("lock; addl %1,%0" : "=m" (value) :
-                    "r" (static_cast<int>(increment)*
-                         AtomicStride<ValueType>::unitSize));
+            __asm__ __volatile__("lock; addl %1,%0"
+                                 : "=m"(value)
+                                 : "r"(static_cast<int>(increment) *
+                                       AtomicStride<ValueType>::unitSize));
         }
     }
 
@@ -93,14 +95,15 @@ class Atomic {
      * \result
      *      The previous value.
      */
-    ValueType compareExchange(ValueType test, ValueType newValue)
-    {
+    ValueType compareExchange(ValueType test, ValueType newValue) {
         if (sizeof(value) == 8) {
-            __asm__ __volatile__("lock; cmpxchgq %0,%1" : "=r" (newValue),
-                    "=m" (value), "=a" (test) : "0" (newValue), "2" (test));
+            __asm__ __volatile__("lock; cmpxchgq %0,%1"
+                                 : "=r"(newValue), "=m"(value), "=a"(test)
+                                 : "0"(newValue), "2"(test));
         } else {
-            __asm__ __volatile__("lock; cmpxchgl %0,%1" : "=r" (newValue),
-                    "=m" (value), "=a" (test) : "0" (newValue), "2" (test));
+            __asm__ __volatile__("lock; cmpxchgl %0,%1"
+                                 : "=r"(newValue), "=m"(value), "=a"(test)
+                                 : "0"(newValue), "2"(test));
         }
         return test;
     }
@@ -113,14 +116,15 @@ class Atomic {
      * \result
      *      The previous value.
      */
-    ValueType exchange(ValueType newValue)
-    {
+    ValueType exchange(ValueType newValue) {
         if (sizeof(value) == 8) {
-            __asm__ __volatile__("xchgq %0,%1" : "=r" (newValue), "=m" (value) :
-                    "0" (newValue));
+            __asm__ __volatile__("xchgq %0,%1"
+                                 : "=r"(newValue), "=m"(value)
+                                 : "0"(newValue));
         } else {
-            __asm__ __volatile__("xchgl %0,%1" : "=r" (newValue), "=m" (value) :
-                    "0" (newValue));
+            __asm__ __volatile__("xchgl %0,%1"
+                                 : "=r"(newValue), "=m"(value)
+                                 : "0"(newValue));
         }
         return newValue;
     }
@@ -130,13 +134,12 @@ class Atomic {
      * increment is the size of the referent type; otherwise the increment
      * is 1).
      */
-    void inc()
-    {
+    void inc() {
         if (AtomicStride<ValueType>::unitSize == 1) {
             if (sizeof(value) == 8) {
-                __asm__ __volatile__("lock; incq %0" : "=m" (value));
+                __asm__ __volatile__("lock; incq %0" : "=m"(value));
             } else {
-                __asm__ __volatile__("lock; incl %0" : "=m" (value));
+                __asm__ __volatile__("lock; incl %0" : "=m"(value));
             }
         } else {
             add(1);
@@ -146,10 +149,7 @@ class Atomic {
     /**
      * Return the current value.
      */
-    ValueType load()
-    {
-        return value;
-    }
+    ValueType load() { return value; }
 
     /**
      * Assign to an Atomic.
@@ -159,8 +159,7 @@ class Atomic {
      * \return
      *      The new value.
      */
-    Atomic<ValueType>& operator=(ValueType newValue)
-    {
+    Atomic<ValueType>& operator=(ValueType newValue) {
         store(newValue);
         return *this;
     }
@@ -168,22 +167,18 @@ class Atomic {
     /**
      * Return the current value.
      */
-    operator ValueType()
-    {
-        return load();
-    }
+    operator ValueType() { return load(); }
 
     /**
      * Atomically increment the current value (for pointer types the
      * increment is the size of the referent type; otherwise the increment
      * is 1).
      */
-    Atomic<ValueType>& operator++()
-    {
+    Atomic<ValueType>& operator++() {
         inc();
         return *this;
     }
-    Atomic<ValueType> operator++(int)              // NOLINT
+    Atomic<ValueType> operator++(int)  // NOLINT
     {
         inc();
         return *this;
@@ -194,12 +189,11 @@ class Atomic {
      * decrement is the size of the referent type; otherwise the decrement
      * is 1).
      */
-    Atomic<ValueType>& operator--()
-    {
+    Atomic<ValueType>& operator--() {
         add(-1);
         return *this;
     }
-    Atomic<ValueType> operator--(int)              // NOLINT
+    Atomic<ValueType> operator--(int)  // NOLINT
     {
         add(-1);
         return *this;
@@ -211,16 +205,13 @@ class Atomic {
      * \param newValue
      *      This value will replace the current value.
      */
-    void store(ValueType newValue)
-    {
-        value = newValue;
-    }
+    void store(ValueType newValue) { value = newValue; }
 
   protected:
     // The value on which the atomic operations operate.
     volatile ValueType value;
 };
 
-} // namespace PerfUtils
+}  // namespace PerfUtils
 
 #endif  // PERFUTILS_ATOMIC_H
