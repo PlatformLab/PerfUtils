@@ -27,6 +27,10 @@ install: $(OBJECT_DIR)/libPerfUtils.a
 $(OBJECT_DIR)/libPerfUtils.a: $(OBJECTS)
 	ar cvr $@ $(OBJECTS)
 
+$(OBJECT_DIR)/TimeTraceTest: $(OBJECT_DIR)/TimeTraceTest.o $(OBJECT_DIR)/libPerfUtils.a
+	$(CXX) $(CFLAGS) -o $@ $^
+
+
 -include $(DEP)
 
 $(OBJECT_DIR)/%.d: $(SRC_DIR)/%.cc | $(OBJECT_DIR)
