@@ -17,6 +17,7 @@
 
 int
 main() {
+    timetrace_set_keepoldevents(true);
     timetrace_set_output_filename("timetrace_wrapper_test.log");
     timetrace_record("Start of execution");
     uint64_t sum = 0;

@@ -35,6 +35,7 @@ void timetrace_print();
  *                       uint32_t arg2, uint32_t arg3);
  */
 void timetrace_record();
+void timetrace_set_keepoldevents(bool keep);
 
 #ifdef __cplusplus
 }

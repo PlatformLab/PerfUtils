@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 #include "TimeTrace.h"
-
 using PerfUtils::TimeTrace;
 
 #ifdef __cplusplus
@@ -51,6 +50,14 @@ void
 timetrace_record(const char* format, uint32_t arg0, uint32_t arg1,
                  uint32_t arg2, uint32_t arg3) {
     TimeTrace::record(format, arg0, arg1, arg2, arg3);
+}
+
+/**
+ * This function is used to set TimeTrace::keepOldEvents
+ */
+void
+timetrace_set_keepoldevents(bool keep) {
+    TimeTrace::keepOldEvents = keep;
 }
 
 #ifdef __cplusplus
