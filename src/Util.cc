@@ -30,11 +30,10 @@ using std::string;
 
 namespace PerfUtils {
 namespace Util {
-string
-format(const char* format, ...) __attribute__((format(printf, 1, 2)));
+string format(const char* format, ...) __attribute__((format(printf, 1, 2)));
 
-string
-vformat(const char* format, va_list ap) __attribute__((format(printf, 1, 0)));
+string vformat(const char* format, va_list ap)
+    __attribute__((format(printf, 1, 0)));
 
 /// A safe version of sprintf.
 std::string

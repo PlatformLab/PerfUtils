@@ -98,7 +98,8 @@ void
 CacheTrace::printInternal(std::string* s) {
     // Initialize file for writing
     FILE* output = NULL;
-    if (s == NULL) output = filename ? fopen(filename, "a") : stdout;
+    if (s == NULL)
+        output = filename ? fopen(filename, "a") : stdout;
 
     // Find the oldest event that we still have (either events[nextIndex],
     // or events[0] if we never completely filled the buffer).
@@ -139,7 +140,8 @@ CacheTrace::printInternal(std::string* s) {
         prevCount = miss;
     } while ((i != nextIndex) && (events[i].message != NULL));
 
-    if (output && output != stdout) fclose(output);
+    if (output && output != stdout)
+        fclose(output);
 }
 
 CacheTrace* CacheTrace::globalTrace = NULL;
@@ -150,7 +152,8 @@ CacheTrace* CacheTrace::globalTrace = NULL;
  */
 CacheTrace*
 CacheTrace::getGlobalInstance() {
-    if (!globalTrace) globalTrace = new CacheTrace("CacheTrace.log");
+    if (!globalTrace)
+        globalTrace = new CacheTrace("CacheTrace.log");
     return globalTrace;
 }
 

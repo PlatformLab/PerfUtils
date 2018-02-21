@@ -42,7 +42,8 @@ static Initialize _(Cycles::init);
  */
 void
 Cycles::init() {
-    if (cyclesPerSec != 0) return;
+    if (cyclesPerSec != 0)
+        return;
 
     // Compute the frequency of the fine-grained CPU timer: to do this,
     // take parallel time readings using both rdtsc and gettimeofday.
@@ -115,7 +116,8 @@ Cycles::perSecond()
  */
 double
 Cycles::toSeconds(uint64_t cycles, double cyclesPerSec) {
-    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
     return static_cast<double>(cycles) / cyclesPerSec;
 }
 
@@ -134,7 +136,8 @@ Cycles::toSeconds(uint64_t cycles, double cyclesPerSec) {
  */
 uint64_t
 Cycles::fromSeconds(double seconds, double cyclesPerSec) {
-    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
     return (uint64_t)(seconds * cyclesPerSec + 0.5);
 }
 
@@ -172,7 +175,8 @@ Cycles::toMilliseconds(uint64_t cycles, double cyclesPerSec) {
  */
 uint64_t
 Cycles::fromMilliseconds(uint64_t ms, double cyclesPerSec) {
-    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
     return (uint64_t)(static_cast<double>(ms) * cyclesPerSec / 1000 + 0.5);
 }
 
@@ -211,7 +215,8 @@ Cycles::toMicroseconds(uint64_t cycles, double cyclesPerSec) {
  */
 uint64_t
 Cycles::toNanoseconds(uint64_t cycles, double cyclesPerSec) {
-    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
     return (uint64_t)(1e09 * static_cast<double>(cycles) / cyclesPerSec + 0.5);
 }
 
@@ -230,7 +235,8 @@ Cycles::toNanoseconds(uint64_t cycles, double cyclesPerSec) {
  */
 uint64_t
 Cycles::fromNanoseconds(uint64_t ns, double cyclesPerSec) {
-    if (cyclesPerSec == 0) cyclesPerSec = getCyclesPerSec();
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
     return (uint64_t)(static_cast<double>(ns) * cyclesPerSec / 1e09 + 0.5);
 }
 

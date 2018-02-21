@@ -357,7 +357,8 @@ TimeTrace::printInternal(std::vector<TimeTrace::Buffer*>* buffers, string* s) {
     for (uint32_t i = 0; i < buffers->size(); i++) {
         buffers->at(i)->activeReaders.add(-1);
     }
-    if (output && output != stdout) fclose(output);
+    if (output && output != stdout)
+        fclose(output);
 }
 
 }  // namespace PerfUtils

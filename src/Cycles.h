@@ -35,7 +35,8 @@ class Cycles {
      */
     static __inline __attribute__((always_inline)) uint64_t rdtsc() {
 #if TESTING
-        if (mockTscValue) return mockTscValue;
+        if (mockTscValue)
+            return mockTscValue;
 #endif
         uint32_t lo, hi;
         __asm__ __volatile__("rdtscp" : "=a"(lo), "=d"(hi) : : "%rcx");

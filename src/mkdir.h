@@ -17,9 +17,7 @@
 #define PERFUTILS_MKDIR_P_H
 #include <sys/stat.h> /* mkdir(2) */
 
-int
-mkdir_p(const char* path, mode_t mode);
-int
-ensureParents(const char* path, mode_t mode = S_IRWXU);
+int mkdir_p(const char* path, mode_t mode);
+int ensureParents(const char* path, mode_t mode = S_IRWXU);
 
 #endif

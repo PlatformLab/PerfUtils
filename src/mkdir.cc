@@ -48,7 +48,8 @@ mkdir_p(const char* path, mode_t mode) {
             *p = '\0';
 
             if (mkdir(_path, mode) != 0) {
-                if (errno != EEXIST) return -1;
+                if (errno != EEXIST)
+                    return -1;
             }
 
             *p = '/';
@@ -56,7 +57,8 @@ mkdir_p(const char* path, mode_t mode) {
     }
 
     if (mkdir(_path, mode) != 0) {
-        if (errno != EEXIST) return -1;
+        if (errno != EEXIST)
+            return -1;
     }
     return 0;
 }

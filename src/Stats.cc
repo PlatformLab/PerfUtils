@@ -23,17 +23,20 @@
 
 int
 compare(const void* a, const void* b) {
-    if (*(const uint64_t*)a == *(const uint64_t*)b) return 0;
+    if (*(const uint64_t*)a == *(const uint64_t*)b)
+        return 0;
     return *(const uint64_t*)a < *(const uint64_t*)b ? -1 : 1;
 }
 
 Statistics
 computeStatistics(uint64_t* rawdata, size_t count) {
     Statistics stats;
-    if (count == 0) return stats;
+    if (count == 0)
+        return stats;
     qsort(rawdata, count, sizeof(uint64_t), compare);
     uint64_t sum = 0;
-    for (size_t i = 0; i < count; i++) sum += rawdata[i];
+    for (size_t i = 0; i < count; i++)
+        sum += rawdata[i];
     stats.average = sum / count;
     stats.min = rawdata[0];
     stats.median = rawdata[count / 2];
@@ -75,7 +78,8 @@ printStatistics(const char* label, uint64_t* rawdata, size_t count,
         snprintf(buf, sizeof(buf), "%s/%s", datadir, label);
         ensureParents(buf);
         FILE* fp = fopen(buf, "w");
-        for (size_t i = 0; i < count; i++) fprintf(fp, "%lu\n", rawdata[i]);
+        for (size_t i = 0; i < count; i++)
+            fprintf(fp, "%lu\n", rawdata[i]);
         fclose(fp);
     }
 }

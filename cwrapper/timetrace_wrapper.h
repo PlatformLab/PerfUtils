@@ -32,7 +32,7 @@ void timetrace_print();
  * mandatory; remaining arguments are only necessary as specified by format
  * string.
  * void timetrace_record(const char* format, uint32_t arg0, uint32_t arg1,
- *         -                      uint32_t arg2, uint32_t arg3);
+ *                       uint32_t arg2, uint32_t arg3);
  */
 void timetrace_record();
 
