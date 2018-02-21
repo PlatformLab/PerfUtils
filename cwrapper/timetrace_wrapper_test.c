@@ -18,12 +18,12 @@
 int
 main() {
     timetrace_set_output_filename("timetrace_wrapper_test.log");
-    timetrace_record("Start of execution", 0, 0, 0, 0);
+    timetrace_record("Start of execution");
     uint64_t sum = 0;
     for (int i = 0; i < (1 << 20); i++) {
         sum += i;
     }
-    timetrace_record("End of a counting loop", 0, 0, 0, 0);
-    timetrace_record("Hello world", 0, 0, 0, 0);
+    timetrace_record("End of a counting loop");
+    timetrace_record("Hello world");
     timetrace_print();
 }

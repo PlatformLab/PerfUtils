@@ -27,8 +27,14 @@ extern "C" {
 
 void timetrace_set_output_filename(const char* filename);
 void timetrace_print();
-void timetrace_record(const char* format, uint32_t arg0, uint32_t arg1,
-                      uint32_t arg2, uint32_t arg3);
+/**
+ * The real signature of this function is the following. The format string is
+ * mandatory; remaining arguments are only necessary as specified by format
+ * string.
+ * void timetrace_record(const char* format, uint32_t arg0, uint32_t arg1,
+ *         -                      uint32_t arg2, uint32_t arg3);
+ */
+void timetrace_record();
 
 #ifdef __cplusplus
 }
