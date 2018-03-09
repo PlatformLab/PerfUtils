@@ -16,9 +16,7 @@
 #ifndef PERFUTIL_UTIL_H
 #define PERFUTIL_UTIL_H
 
-#include <asm/unistd.h>
 #include <assert.h>
-#include <sched.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
@@ -80,61 +78,6 @@ rdpmc(int ecx) {
     unsigned int a, d;
     __asm __volatile("rdpmc" : "=a"(a), "=d"(d) : "c"(ecx));
     return ((uint64_t)a) | (((uint64_t)d) << 32);
-}
-
-/**
- * Returns the thread id of the calling thread
- * As long as the thread continues to run, this id is unique across all threads
- * running on the system so it can be used to uniquely name per-thread
- * resources
- */
-static pid_t FORCE_INLINE
-gettid() {
-    return static_cast<pid_t>(syscall(__NR_gettid));
-}
-
-/**
- * This function pins the currently executing thread onto the CPU Core with
- * the id given in the argument.
- *
- * \param id
- *      The id of the core to pin the caller's thread to.
- */
-static FORCE_INLINE void
-pinThreadToCore(int id) {
-    cpu_set_t cpuset;
-
-    CPU_ZERO(&cpuset);
-    CPU_SET(id, &cpuset);
-    assert(sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0);
-}
-
-/**
- * Returns the cpu affinity mask of the currently executing thread. The type
- * cpu_set_t encodes information about which cores the current thread is
- * permitted to run on.
- */
-static FORCE_INLINE cpu_set_t
-getCpuAffinity() {
-    cpu_set_t cpuset;
-
-    CPU_ZERO(&cpuset);
-    assert(sched_getaffinity(0, sizeof(cpuset), &cpuset) == 0);
-    return cpuset;
-}
-
-/**
- * This function sets the allowable set of cores for the currently executing
- * thread, and is usually used to restore an older set which was read using
- * getCpuAffinity().
- *
- * \param cpuset
- *      An object of type cpu_set_t which encodes the set of cores which
- *      current thread is permitted to run on.
- */
-static FORCE_INLINE void
-setCpuAffinity(cpu_set_t cpuset) {
-    assert(sched_setaffinity(0, sizeof(cpuset), &cpuset) == 0);
 }
 
 /**
