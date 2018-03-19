@@ -51,6 +51,7 @@ class Cycles {
     static uint64_t toMilliseconds(uint64_t cycles, double cyclesPerSec = 0);
     static uint64_t fromMilliseconds(uint64_t ms, double cyclesPerSec = 0);
     static uint64_t toMicroseconds(uint64_t cycles, double cyclesPerSec = 0);
+    static uint64_t fromMicroseconds(uint64_t us, double cyclesPerSec = 0);
     static uint64_t toNanoseconds(uint64_t cycles, double cyclesPerSec = 0);
     static uint64_t fromNanoseconds(uint64_t ns, double cyclesPerSec = 0);
     static void sleep(uint64_t us);

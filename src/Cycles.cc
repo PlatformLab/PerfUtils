@@ -199,6 +199,13 @@ Cycles::toMicroseconds(uint64_t cycles, double cyclesPerSec) {
     return toNanoseconds(cycles, cyclesPerSec) / 1000;
 }
 
+uint64_t
+Cycles::fromMicroseconds(uint64_t us, double cyclesPerSec) {
+    if (cyclesPerSec == 0)
+        cyclesPerSec = getCyclesPerSec();
+    return (uint64_t)(static_cast<double>(us) * cyclesPerSec / 1e06 + 0.5);
+}
+
 /**
  * Given an elapsed time measured in cycles, return an integer
  * giving the corresponding time in nanoseconds. Note: toSeconds()
