@@ -17,7 +17,7 @@ ifndef CHECK_TARGET
 CHECK_TARGET=$$(find $(SRC_DIR) $(WRAPPER_DIR) '(' -name '*.h' -or -name '*.cc' ')' -not -path '$(TOP)/googletest/*' )
 endif
 
-OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o Stats.o mkdir.o timetrace_wrapper.o
+OBJECT_NAMES := CacheTrace.o TimeTrace.o Cycles.o Util.o Stats.o mkdir.o timetrace_wrapper.o cycles_wrapper.o
 
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 HEADERS= $(shell find $(SRC_DIR) $(WRAPPER_DIR) -name '*.h')
@@ -35,6 +35,9 @@ $(OBJECT_DIR)/TimeTraceTest: $(OBJECT_DIR)/TimeTraceTest.o $(OBJECT_DIR)/libPerf
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 $(OBJECT_DIR)/timetrace_wrapper_test: $(OBJECT_DIR)/timetrace_wrapper_test.o $(OBJECT_DIR)/libPerfUtils.a
+	$(CC) $(CFLAGS) -lstdc++ -o $@ $^
+
+$(OBJECT_DIR)/cycles_wrapper_test: $(OBJECT_DIR)/cycles_wrapper_test.o $(OBJECT_DIR)/libPerfUtils.a
 	$(CC) $(CFLAGS) -lstdc++ -o $@ $^
 
 -include $(DEP)
