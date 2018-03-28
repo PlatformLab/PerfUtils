@@ -16,7 +16,7 @@
 
 """
 This program reads a log file and generates summary information for
-time trace information in the files.
+time trace information in the file.
 """
 
 from __future__ import division, print_function
@@ -62,12 +62,6 @@ relativeEvents = {}
 
 eventCount = {}
 
-# This variable holds the names of events in the order in which they originally
-# occurred. It is used for breaking ties when sorting by trace value relative
-# to some starting event, especially when we are looking at a CacheTrace
-# instead of a TimeTrace.
-eventNames = []
-
 def scan(f, startingEvent):
     """
     Scan the log file given by 'f' (handle for an open file) and collect
@@ -83,12 +77,12 @@ def scan(f, startingEvent):
     for line in f:
         match = re.match(' *([0-9.]+) ns \(\+ *([0-9.]+) ns\): (.*)', line)
         if not match:
-            match = re.match(' *([0-9.]+) misses \(\+ *([0-9.]+) misses\): (.*)', line)
-            if not match:
-                continue
+            continue
         thisEventTime = float(match.group(1))
         thisEventInterval = float(match.group(2))
         thisEvent = match.group(3)
+        if options.noNumbers:
+            thisEvent = re.sub('[0-9]+', '?', thisEvent)
         if (thisEventTime < lastTime):
             print('Time went backwards at the following line:\n%s' % (line))
         lastTime = thisEventTime
@@ -97,8 +91,6 @@ def scan(f, startingEvent):
                 eventIntervals[thisEvent] = []
             eventIntervals[thisEvent].append(thisEventInterval)
             # print('%s %s %s' % (thisEventTime, thisEventInterval, thisEvent))
-        if thisEvent not in eventNames:
-            eventNames.append(thisEvent)
         if startingEvent:
             if string.find(thisEvent, startingEvent) >= 0:
                 # Reset variables to indicate that we are starting a new
@@ -130,17 +122,24 @@ def scan(f, startingEvent):
             occurrences[count-1]['times'].append(relativeTime)
             occurrences[count-1]['intervals'].append(thisEventInterval)
 
-
-
 # Parse command line options
 parser = OptionParser(description=
         'Read one or more log files and summarize the time trace information '
         'present in the file(s) as specified by the arguments.',
         usage='%prog [options] file file ...',
         conflict_handler='resolve')
+parser.add_option('-a', '--alt', action='store_true', default=False,
+        dest='altFormat',
+        help='use alternate output format if -f is specified (print min, '
+        'max, etc. for cumulative time, not delta)')
 parser.add_option('-f', '--from', type='string', dest='startEvent',
-    help='measure times for other events relative to FROM; FROM contains a '
-            'substring of an event')
+        help='measure times for other events relative to FROM; FROM contains a '
+        'substring of an event')
+parser.add_option('-n', '--numbers', action='store_false', default=True,
+        dest='noNumbers',
+        help='treat numbers in event names as significant; if this flag '
+        'is not specified, all numbers are replaced with ? (events will be '
+        'considered the same if they differ only in numeric fields)')
 
 (options, files) = parser.parse_args()
 if len(files) == 0:
@@ -171,7 +170,7 @@ if not options.startEvent:
         message = '%-*s  %8.1f %8.1f %8.1f %8.1f %7d' % (nameLength,
             event, medianTime, intervals[0], intervals[-1],
             sum(intervals)/len(intervals), len(intervals))
-        outputInfo.append([medianTime, message, event])
+        outputInfo.append([medianTime, message])
 
     # Pass 2: sort in order of median interval length, then print.
     outputInfo.sort(key=lambda item: item[0], reverse=True)
@@ -186,8 +185,7 @@ if not options.startEvent:
 # then sort them by elapsed time from the starting event.
 if options.startEvent:
     # Each entry in the following variable will contain a list with
-    # 3 elements: time to use for sorting, and string to print, and a event
-    # name for secondary sorting.
+    # 2 elements: time to use for sorting, and string to print.
     outputInfo = []
 
     # Compute the length of the longest event name.
@@ -204,7 +202,7 @@ if options.startEvent:
         occurrences = relativeEvents[event]
 
         # Each iteration through the following loop processes the nth
-        # occurrences of this event.
+        # occurrence of this event.
         for i in range(len(occurrences)):
             eventName = event
             if i != 0:
@@ -214,37 +212,31 @@ if options.startEvent:
             times.sort()
             medianTime = times[len(times)//2]
             intervals.sort()
-            message = '%-*s  %8.1f %8.1f %8.1f %8.1f %8.1f %7d' % (nameLength,
-                eventName, medianTime, times[0], times[-1],
-                sum(times)/len(times), intervals[len(intervals)//2],
-                len(times))
-            outputInfo.append([medianTime, message, event])
+            medianInterval = intervals[len(intervals)//2]
+            if options.altFormat:
+                message = '%-*s  %8.1f %8.1f %8.1f %8.1f %8.1f %7d' % (
+                    nameLength, eventName, medianTime, times[0], times[-1],
+                    sum(times)/len(times), intervals[len(intervals)//2],
+                    len(times))
+            else:
+                message = '%-*s  %8.1f %8.1f %8.1f %8.1f %8.1f %7d' % (
+                    nameLength, eventName, medianTime, medianInterval,
+                    intervals[0], intervals[-1], sum(intervals)/len(intervals),
+                    len(intervals))
+            outputInfo.append([medianTime, message])
 
-    # Rotate eventNames so that the starting event appears first in the list,
-    # and we can sort other events based on the index in eventNames.
-    startIndex = 0
-    for index, eventName in enumerate(eventNames):
-        if options.startEvent in eventName:
-            startIndex = index
-            break
-    eventNames = eventNames[startIndex:] + eventNames[:startIndex]
-
-    # This function compares events in a TimeTrace or CacheTrace first by the
-    # median value relative to the strarting event, and then by the order they
-    # appeared in the trace, relative to the starting event.
-    def eventComparator(x,y):
-        if x[0] < y[0]: return -1
-        if x[0] > y[0]: return 1
-        if eventNames.index(x[2]) < eventNames.index(y[2]):
-            return -1
-        if eventNames.index(x[2]) > eventNames.index(y[2]):
-            return 1
-        return 0
-
-    outputInfo.sort(cmp=eventComparator)
-    print('%-*s    Median      Min      Max  Average    Delta   Count' % (nameLength,
-            "Event"))
-    print('%s------------------------------------------------------' %
-            ('-' * nameLength))
+    outputInfo.sort(key=lambda item: item[0])
+    if options.altFormat:
+        print('%-*s    Median      Min      Max  Average    Delta   Count' % (nameLength,
+                "Event"))
+        print('%s------------------------------------------------------' %
+                ('-' * nameLength))
+    else:
+        print('%-*s     Cum.    ------------------Delta------------------' %
+                (nameLength, ""))
+        print('%-*s    Median   Median      Min      Max  Average   Count' %
+                (nameLength, "Event"))
+        print('%s------------------------------------------------------' %
+                ('-' * nameLength))
     for message in outputInfo:
         print(message[1])
