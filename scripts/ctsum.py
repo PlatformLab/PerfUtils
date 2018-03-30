@@ -85,8 +85,6 @@ def scan(f):
             coreIdThreads[prevCoreId].remove(threadName)
         threadCoreIds[threadName].append(thisCoreId)
 
-        # Clear previous threads that were running on this core
-        # coreIdThreads[thisCoreId][:] = []
         coreIdThreads[thisCoreId].append(threadName)
 
         # Print the current core map
@@ -97,28 +95,36 @@ def printCoreMap(currTime, deltaTime):
     """
     Print the current time, interval time (in ns), and the current core map
     (core id => thread names) based on coreIdThreads. Print in the group of
-    hypertwins.
+    hypertwins. Print multiple lines if there are multiple threads on one core.
     """
 
     print('{:>15.2f} \t {:>15.2f} '.format(currTime, deltaTime), end='')
     hypertwin = numCores // 2
-    for id in xrange(0, hypertwin):
-        print('\t', end='')
-        if len(coreIdThreads[id]) == 0:
-            print('{:>5}'.format(''), end='')
-        else:
-            threadName = coreIdThreads[id][-1] # Always print the latest one
-            print('{:>5s}'.format(threadName), end='')
 
-        print('|', end='')
+    # numEntries is the number of lines we should print
+    numEntries = max(len(coreIdThreads[id]) for id in coreIdThreads)
 
-        if len(coreIdThreads[id+hypertwin]) == 0:
-            print('{:<5}'.format(''), end='')
-        else:
-            threadName = coreIdThreads[id+hypertwin][-1]
-            print('{:<5s}'.format(threadName), end='')
-    print('')
+    for i in xrange(0, numEntries):
+        if i > 0:
+            # Print the preceeding space
+            print('{:>15} \t {:>15} '.format('', ''), end='')
+        for id in xrange(0, hypertwin):
+            print('\t', end='')
+            if len(coreIdThreads[id]) < i + 1:
+                print('{:>5}'.format(''), end='')
+            else:
+                threadName = coreIdThreads[id][i]
+                print('{:>5s}'.format(threadName), end='')
 
+            print('|', end='')
+
+            if len(coreIdThreads[id+hypertwin]) < i + 1:
+                print('{:<5}'.format(''), end='')
+            else:
+                threadName = coreIdThreads[id+hypertwin][i]
+                print('{:<5s}'.format(threadName), end='')
+        print('')
+    print('\n')
 
 def parseArgs():
     parser = ArgumentParser(description=
