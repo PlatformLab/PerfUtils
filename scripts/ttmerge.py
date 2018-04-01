@@ -22,7 +22,7 @@ same machine and outputs a combined log file.
 
 from __future__ import division, print_function
 from glob import glob
-from optparse import OptionParser
+from docopt import docopt
 from collections import namedtuple
 import math
 import os
@@ -51,12 +51,22 @@ def parseTrace(f):
         traceOutput.append(Event(thisEventTime, thisEvent))
   return Trace(traceOutput, cyclesPerSecond, startCycles)
 
+
+doc = r"""
+Usage: ./ttmerge.py [-h] [-k] [<input> ...]
+
+    -h,--help                  show this
+    -k,--keepOldEvents         keep old events rather than truncating them
+"""
 def main():
+  options = docopt(doc)
   rawTraces = []
-  for i in sys.argv[1:]:
+  for i in options["<input>"]:
     rawTraces.append(parseTrace(i))
 
-  if not rawTraces: return
+  if not rawTraces:
+    print(doc)
+    return
 
   # Adjust traces using the same estimate of cyclesPerSecond, so that we can
   # line them up.
@@ -72,10 +82,27 @@ def main():
   # The merge algorithm is similar to the merge used within a single TimeTrace
   # between threads. In particular, it starts at the most recent of the oldest
   # times among the input traces.
-  startTime = 0;
-  for trace in traces:
-    if trace[0].timestamp > startTime:
-      startTime = trace[0].timestamp
+
+  # Decide on the time of the first event to be included in the output.
+  if not options['--keepOldEvents']:
+    # This is most recent of the oldest times in all the traces (an empty
+    # trace has an "oldest time" of 0). The idea here is to make sure
+    # that there's no missing data in what we print (if trace A goes back
+    # farther than trace B, skip the older events in trace A, since there
+    # might have been related events that were once in trace B but have since
+    # been overwritten).
+    startTime = 0;
+    for trace in traces:
+      if trace[0].timestamp > startTime:
+        startTime = trace[0].timestamp
+  else:
+    # This is the oldest time across all the traces; combined trace will
+    # include data from threads which logged only when application first
+    # started.
+    startTime = sys.maxint
+    for trace in traces:
+      if trace[0].timestamp < startTime:
+        startTime = trace[0].timestamp
 
   # Remove all events before the starting time.
   for trace in traces:
