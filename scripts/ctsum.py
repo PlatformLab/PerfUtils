@@ -56,9 +56,9 @@ def scan(f):
 
     # Print the header line
     hypertwin = numCores // 2
-    print('Total Time (ns) \t Delta Time (ns) ', end='')
+    print('Total Time (ns)  Delta Time (ns) ', end='')
     for id in xrange(0, hypertwin):
-        print('\t{:>5}|{:<5}'.format(int(id), int(id + hypertwin)), end='')
+        print('  {:>8}|{:<8}'.format(int(id), int(id + hypertwin)), end='')
     print('')
 
     for line in f:
@@ -98,7 +98,7 @@ def printCoreMap(currTime, deltaTime):
     hypertwins. Print multiple lines if there are multiple threads on one core.
     """
 
-    print('{:>15.2f} \t {:>15.2f} '.format(currTime, deltaTime), end='')
+    print('{:>15.2f}  {:>15.2f} '.format(currTime, deltaTime), end='')
     hypertwin = numCores // 2
 
     # numEntries is the number of lines we should print
@@ -107,22 +107,22 @@ def printCoreMap(currTime, deltaTime):
     for i in xrange(0, numEntries):
         if i > 0:
             # Print the preceeding space
-            print('{:>15} \t {:>15} '.format('', ''), end='')
+            print('{:>15}  {:>15} '.format('', ''), end='')
         for id in xrange(0, hypertwin):
-            print('\t', end='')
+            print('  ', end='')
             if len(coreIdThreads[id]) < i + 1:
-                print('{:>5}'.format(''), end='')
+                print('{:>8}'.format(''), end='')
             else:
                 threadName = coreIdThreads[id][i]
-                print('{:>5s}'.format(threadName), end='')
+                print('{:>8s}'.format(threadName), end='')
 
             print('|', end='')
 
             if len(coreIdThreads[id+hypertwin]) < i + 1:
-                print('{:<5}'.format(''), end='')
+                print('{:<8}'.format(''), end='')
             else:
                 threadName = coreIdThreads[id+hypertwin][i]
-                print('{:<5s}'.format(threadName), end='')
+                print('{:<8s}'.format(threadName), end='')
         print('')
     print('\n')
 
