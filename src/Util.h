@@ -52,6 +52,10 @@ void* cacheAlignAlloc(size_t size);
 void pinAvailableCore();
 int getPhysicalCore(int coreId);
 int getHyperTwin(int coreId);
+bool timespecLess(const struct timespec& t1, const struct timespec& t2);
+bool timespecLessEqual(const struct timespec& t1, const struct timespec& t2);
+struct timespec timespecAdd(const struct timespec& t1,
+        const struct timespec& t2);
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))
