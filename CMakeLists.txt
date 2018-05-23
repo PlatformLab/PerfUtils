@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.11)
 
-project(PerfUtils VERSION 0.1.0 LANGUAGES CXX C)
+project(PerfUtils VERSION 0.1.1 LANGUAGES CXX C)
 
 ################################################################################
 ## Target Definiton ############################################################
@@ -64,7 +64,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsConfigVersion.cmake"
     VERSION ${PerfUtils_VERSION}
-    COMPATIBILITY ExactVersion
+    COMPATIBILITY SameMajorVersion
 )
 
 export(EXPORT PerfUtilsTargets
