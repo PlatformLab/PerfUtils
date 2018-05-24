@@ -15,8 +15,9 @@ add_library(PerfUtils
     cwrapper/timetrace_wrapper.cc
     cwrapper/cycles_wrapper.cc
 )
-target_include_directories(PerfUtils 
-    PRIVATE src cwrappers
+target_include_directories(PerfUtils PUBLIC
+    $<BUILD_INTERFACE:src cwrappers>
+    $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(PerfUtils
     PRIVATE NDEBUG
@@ -62,20 +63,13 @@ write_basic_package_version_file(
     COMPATIBILITY ExactVersion
 )
 
-export(EXPORT PerfUtilsTargets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsTargets.cmake"
-    NAMESPACE PerfUtils::
-)
 configure_file(cmake/PerfUtilsConfig.cmake
     "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsConfig.cmake"
     COPYONLY
 )
+
 set(ConfigPackageLocation lib/cmake/PerfUtils)
 install(EXPORT PerfUtilsTargets
-    FILE
-        PerfUtilsTargets.cmake
-    NAMESPACE
-        PerfUtils::
     DESTINATION
         ${ConfigPackageLocation}
 )
