@@ -51,6 +51,7 @@ std::vector<int> getAllUseableCores();
 void* cacheAlignAlloc(size_t size);
 void pinAvailableCore();
 int getPhysicalCore(int coreId);
+int getHyperTwin(int coreId);
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))

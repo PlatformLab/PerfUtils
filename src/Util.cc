@@ -304,5 +304,28 @@ getPhysicalCore(int coreId) {
     return physicalCoreId;
 }
 
+/**
+ * Get the core id of the hypertwin of the given core. This code assumes there
+ * is only one such hypertwin on the system it is running on. It also assumes
+ * that hypertwins are delimited by the comma separator.
+ *
+ * \param coreId
+ *     The coreId whose hypertwin's ID will be returned.
+ */
+int
+getHyperTwin(int coreId) {
+    // This file contains the siblings of core coreId.
+    std::string siblingFilePath = "/sys/devices/system/cpu/cpu" +
+                                  std::to_string(coreId) +
+                                  "/topology/thread_siblings_list";
+    FILE* siblingFile = fopen(siblingFilePath.c_str(), "r");
+    int twin1, twin2;
+    // The first cpuid in the file is always that of the physical core
+    fscanf(siblingFile, "%d,%d", &twin1, &twin2);
+    if (coreId == twin1)
+        return twin2;
+    return twin1;
+}
+
 }  // namespace Util
 }  // namespace PerfUtils

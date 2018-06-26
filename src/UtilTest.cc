@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 
 using ::testing::ElementsAre;
+using ::testing::Eq;
 
 TEST(UtilTest, fileGetContents) {
     // Test an empty file.
@@ -44,5 +45,11 @@ TEST(UtilTest, readRanges) {
     char content[] = "1-3,5-7";
     FILE* f = fmemopen(content, sizeof(content), "r");
     result = PerfUtils::Util::readRanges(f);
-    ASSERT_THAT(result, ElementsAre(1, 2, 3, 5, 6, 7));
+    EXPECT_THAT(result, ElementsAre(1, 2, 3, 5, 6, 7));
+}
+
+TEST(UtilTest, getHyperTwin) {
+    int hyperZero = PerfUtils::Util::getHyperTwin(0);
+    int physicalCore = PerfUtils::Util::getPhysicalCore(hyperZero);
+    EXPECT_THAT(physicalCore, Eq(0));
 }
