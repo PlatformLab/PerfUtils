@@ -140,6 +140,48 @@ split(const std::string& s, char delim) {
 }
 
 /**
+ * Read all bytes in a file and return it as a buffer. The caller is
+ * responsible for calling delete[] on the return value.
+ *
+ * Limitation: This function only handles ASCII files, and does not correctly
+ * read files containing NULL characters.
+ */
+char*
+fileGetContents(FILE* f) {
+    char* output;
+    // Determine file size
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+
+    // We don't want to allocate memory if the file size is zero, because it is
+    // undefined behavior to dereference such memory.
+    if (size == 0) {
+        output = new char[1];
+        output[0] = '\0';
+    } else {
+        output = new char[size];
+        rewind(f);
+        fread(output, sizeof(char), size, f);
+    }
+    return output;
+}
+
+/**
+ * Read all bytes in a file and return it as a buffer. The caller is
+ * responsible for calling delete[] on the return value.
+ *
+ * Limitation: This function only handles ASCII files, and does not correctly
+ * read files containing NULL characters.
+ */
+char*
+fileGetContents(const char* filename) {
+    FILE* f = fopen(filename, "r");
+    char* output = fileGetContents(f);
+    fclose(f);
+    return output;
+}
+
+/**
  * Take a string containing comma-separated ranges of integers and return an
  * std::vector containing the numbers in each range.
  */

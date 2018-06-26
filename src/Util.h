@@ -42,6 +42,8 @@ namespace Util {
 std::string hexDump(const void* buffer, uint64_t bytes);
 void split(const std::string& s, char delim, std::vector<std::string>& elems);
 std::vector<std::string> split(const std::string& s, char delim);
+char* fileGetContents(FILE* f);
+char* fileGetContents(const char* filename);
 std::vector<int> parseRanges(const char* coreDesc);
 std::vector<int> getAllUseableCores();
 void* cacheAlignAlloc(size_t size);

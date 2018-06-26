@@ -7,7 +7,7 @@ SRC_DIR = src
 WRAPPER_DIR = cwrapper
 INCLUDE_DIR = $(DESTDIR)/include
 LIB_DIR = $(DESTDIR)/lib
-CXXFLAGS=-O3 -DNDEBUG -fPIC -std=c++11
+CXXFLAGS=-O3 -DNDEBUG -fPIC -std=c++11 -pthread
 CFLAGS=-O3 -DNDEBUG -fPIC -std=gnu99
 INCLUDE=-I$(SRC_DIR)
 
@@ -66,7 +66,25 @@ $(OBJECT_DIR):
 check:
 	scripts/cpplint.py --filter=-runtime/threadsafe_fn,-readability/streams,-whitespace/blank_line,-whitespace/braces,-whitespace/comments,-runtime/arrays,-build/include_what_you_use,-whitespace/semicolon,-build/include $(CHECK_TARGET)
 	! grep '.\{81\}' $(SRC_DIR)/*.h $(SRC_DIR)/*.cc
+################################################################################
+# Test targets
+GTEST_DIR=../googletest/googletest
+TEST_LIBS=-Lobj/ -lPerfUtils $(OBJECT_DIR)/libgtest.a
+INCLUDE+=-I${GTEST_DIR}/include
 
+test: $(OBJECT_DIR)/UtilTest
+	$(OBJECT_DIR)/UtilTest
+
+$(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a $(OBJECT_DIR)/libPerfUtils.a
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
+
+$(OBJECT_DIR)/libgtest.a:
+	$(CXX) -I${GTEST_DIR}/include -I${GTEST_DIR} \
+        -pthread -c ${GTEST_DIR}/src/gtest-all.cc \
+        -o $(OBJECT_DIR)/gtest-all.o
+	ar -rv $(OBJECT_DIR)/libgtest.a $(OBJECT_DIR)/gtest-all.o
+
+################################################################################
 clean:
 	rm -rf $(LIB_DIR) $(INCLUDE_DIR) $(OBJECT_DIR)
 
