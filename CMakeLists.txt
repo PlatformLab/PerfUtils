@@ -84,7 +84,16 @@ install(
 ################################################################################
 ## Tests #######################################################################
 ################################################################################
+include(cmake/googletest/googletest-config.cmake)
+include(GoogleTest)
+
+# Enables the add_test macro, which adds the test to the list to run.
 enable_testing()
+
+add_executable(UtilTest src/UtilTest.cc)
+target_link_libraries(UtilTest PerfUtils gtest_main)
+
+gtest_discover_tests(UtilTest)
 
 add_executable(TimeTraceTest src/TimeTraceTest.cc)
 target_link_libraries(TimeTraceTest PerfUtils)

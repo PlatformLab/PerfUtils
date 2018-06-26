@@ -32,4 +32,5 @@ main() {
     printf("1 ms = %lu cycles\n", cycles_from_milliseconds(1));
     printf("1 us = %lu cycles\n", cycles_from_microseconds(1));
     printf("1 ns = %lu cycles\n", cycles_from_nanoseconds(1));
+    return 0;
 }
