@@ -45,6 +45,8 @@ std::vector<std::string> split(const std::string& s, char delim);
 char* fileGetContents(FILE* f);
 char* fileGetContents(const char* filename);
 std::vector<int> parseRanges(const char* coreDesc);
+std::vector<int> readRanges(FILE* f);
+std::vector<int> readRanges(const char* filename);
 std::vector<int> getAllUseableCores();
 void* cacheAlignAlloc(size_t size);
 void pinAvailableCore();

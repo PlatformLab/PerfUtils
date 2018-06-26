@@ -30,5 +30,9 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 # dependencies automatically when using CMake 2.8.11 or
 # later. Otherwise we have to add them here ourselves.
 if (CMAKE_VERSION VERSION_LESS 2.8.11)
-  include_directories("${gtest_SOURCE_DIR}/include")
+  include_directories(BEFORE SYSTEM
+      "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
+else()
+  target_include_directories(gmock_main SYSTEM BEFORE INTERFACE
+      "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
 endif()

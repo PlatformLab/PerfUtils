@@ -69,13 +69,14 @@ check:
 ################################################################################
 # Test targets
 GTEST_DIR=../googletest/googletest
-TEST_LIBS=-Lobj/ -lPerfUtils $(OBJECT_DIR)/libgtest.a
-INCLUDE+=-I${GTEST_DIR}/include
+GMOCK_DIR=../googletest/googlemock
+TEST_LIBS=-Lobj/ -lPerfUtils $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a
+INCLUDE+=-I${GTEST_DIR}/include -I${GMOCK_DIR}/include
 
 test: $(OBJECT_DIR)/UtilTest
 	$(OBJECT_DIR)/UtilTest
 
-$(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a $(OBJECT_DIR)/libPerfUtils.a
+$(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
 
 $(OBJECT_DIR)/libgtest.a:
@@ -83,6 +84,13 @@ $(OBJECT_DIR)/libgtest.a:
         -pthread -c ${GTEST_DIR}/src/gtest-all.cc \
         -o $(OBJECT_DIR)/gtest-all.o
 	ar -rv $(OBJECT_DIR)/libgtest.a $(OBJECT_DIR)/gtest-all.o
+
+$(OBJECT_DIR)/libgmock.a:
+	$(CXX) -I${GTEST_DIR}/include -I${GTEST_DIR} \
+		-I${GMOCK_DIR}/include -I${GMOCK_DIR} \
+        -pthread -c ${GTEST_DIR}/src/gtest-all.cc \
+        -o $(OBJECT_DIR)/gmock-all.o
+	ar -rv $(OBJECT_DIR)/libgmock.a $(OBJECT_DIR)/gmock-all.o
 
 ################################################################################
 clean:

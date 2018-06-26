@@ -203,6 +203,30 @@ parseRanges(const char* coreDesc) {
 }
 
 /**
+ * Take a file containing comma-separated ranges of integers and return an
+ * std::vector containing the numbers in each range.
+ */
+std::vector<int>
+readRanges(FILE* f) {
+    char* buf = fileGetContents(f);
+    std::vector<int> numbers = parseRanges(buf);
+    delete[] buf;
+    return numbers;
+}
+
+/**
+ * Take the name of a file containing comma-separated ranges of integers and
+ * return an std::vector containing the numbers in each range.
+ */
+std::vector<int>
+readRanges(const char* filename) {
+    FILE* f = fopen(filename, "r");
+    std::vector<int> numbers = readRanges(f);
+    fclose(f);
+    return numbers;
+}
+
+/**
  * Return all the cores that the current process has access to.
  */
 std::vector<int>

@@ -17,9 +17,12 @@
 
 #include <string.h>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-TEST(UTIL, fileGetContents) {
+using ::testing::ElementsAre;
+
+TEST(UtilTest, fileGetContents) {
     // Test an empty file.
     char* result = PerfUtils::Util::fileGetContents("/dev/null");
     EXPECT_EQ(0, strlen(result));
@@ -31,4 +34,15 @@ TEST(UTIL, fileGetContents) {
     result = PerfUtils::Util::fileGetContents(f);
     EXPECT_STREQ(content, result);
     delete[] result;
+}
+
+TEST(UtilTest, readRanges) {
+    // Test an empty file.
+    std::vector<int> result = PerfUtils::Util::readRanges("/dev/null");
+    EXPECT_EQ(0, result.size());
+
+    char content[] = "1-3,5-7";
+    FILE* f = fmemopen(content, sizeof(content), "r");
+    result = PerfUtils::Util::readRanges(f);
+    ASSERT_THAT(result, ElementsAre(1, 2, 3, 5, 6, 7));
 }

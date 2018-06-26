@@ -91,7 +91,7 @@ include(GoogleTest)
 enable_testing()
 
 add_executable(UtilTest src/UtilTest.cc)
-target_link_libraries(UtilTest PerfUtils gtest_main)
+target_link_libraries(UtilTest PerfUtils gmock_main)
 
 gtest_discover_tests(UtilTest)
 
