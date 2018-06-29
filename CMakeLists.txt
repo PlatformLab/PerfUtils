@@ -15,9 +15,11 @@ add_library(PerfUtils
     cwrapper/timetrace_wrapper.cc
     cwrapper/cycles_wrapper.cc
 )
-target_include_directories(PerfUtils PUBLIC
-    $<BUILD_INTERFACE:src cwrappers>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(PerfUtils
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cwrappers>
+        $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(PerfUtils
     PRIVATE NDEBUG
@@ -34,11 +36,13 @@ set_target_properties(PerfUtils PROPERTIES
 )
 
 ################################################################################
-## Install & Config ############################################################
+## Installation & Export #######################################################
 ################################################################################
 install(TARGETS PerfUtils EXPORT PerfUtilsTargets 
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
 )
 install(
     FILES
@@ -63,23 +67,27 @@ write_basic_package_version_file(
     COMPATIBILITY ExactVersion
 )
 
+export(EXPORT PerfUtilsTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsTargets.cmake"
+)
+
+install(EXPORT PerfUtilsTargets
+    FILE PerfUtilsTargets.cmake
+    DESTINATION lib/cmake/PerfUtils
+)
+
 configure_file(cmake/PerfUtilsConfig.cmake
     "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsConfig.cmake"
     COPYONLY
 )
 
-set(ConfigPackageLocation lib/cmake/PerfUtils)
-install(EXPORT PerfUtilsTargets
-    DESTINATION
-        ${ConfigPackageLocation}
-)
 install(
     FILES
-        cmake/PerfUtilsConfig.cmake
+        "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsConfig.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/PerfUtils/PerfUtilsConfigVersion.cmake"
-    DESTINATION
-        ${ConfigPackageLocation}
+    DESTINATION lib/cmake/PerfUtils
 )
+
 
 ################################################################################
 ## Tests #######################################################################
