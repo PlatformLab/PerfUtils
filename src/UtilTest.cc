@@ -20,6 +20,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using ::testing::ContainerEq;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 
@@ -52,4 +53,14 @@ TEST(UtilTest, getHyperTwin) {
     int hyperZero = PerfUtils::Util::getHyperTwin(0);
     int physicalCore = PerfUtils::Util::getPhysicalCore(hyperZero);
     EXPECT_THAT(physicalCore, Eq(0));
+}
+
+TEST(UtilTest, containerToUnorderedSet) {
+    std::vector<int> vec{1, 2, 3};
+    std::unordered_set<int> set = PerfUtils::Util::containerToUnorderedSet(vec);
+    EXPECT_THAT(set, ContainerEq(std::unordered_set<int>{1, 2, 3}));
+
+    std::vector<int> deq{4, 5, 6};
+    set = PerfUtils::Util::containerToUnorderedSet(deq);
+    EXPECT_THAT(set, ContainerEq(std::unordered_set<int>{4, 5, 6}));
 }

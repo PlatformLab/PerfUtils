@@ -29,6 +29,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace PerfUtils {
@@ -55,6 +56,19 @@ int getHyperTwin(int coreId);
 
 /* Doxygen is stupid and cannot distinguish between attributes and arguments. */
 #define FORCE_INLINE __inline __attribute__((always_inline))
+
+/**
+ * Convert any templated iterable container to an unordered set.
+ */
+template <template <class...> class C, typename S, typename... Ts>
+std::unordered_set<S>
+containerToUnorderedSet(const C<S, Ts...>& container) {
+    std::unordered_set<S> set;
+    for (S s : container) {
+        set.insert(s);
+    }
+    return set;
+}
 
 /**
  * A utility for function for calling rdpmc and reading Intel's performance
