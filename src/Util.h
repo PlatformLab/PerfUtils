@@ -41,6 +41,10 @@ namespace PerfUtils {
 namespace Util {
 
 std::string hexDump(const void* buffer, uint64_t bytes);
+std::string format(const char* format, ...)
+    __attribute__((format(printf, 1, 2)));
+std::string vformat(const char* format, va_list ap)
+    __attribute__((format(printf, 1, 0)));
 void split(const std::string& s, char delim, std::vector<std::string>& elems);
 std::vector<std::string> split(const std::string& s, char delim);
 char* fileGetContents(FILE* f);
