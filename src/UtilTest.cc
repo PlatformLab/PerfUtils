@@ -15,7 +15,10 @@
 
 #include "Util.h"
 
+#include <fcntl.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -23,6 +26,37 @@
 using ::testing::ContainerEq;
 using ::testing::ElementsAre;
 using ::testing::Eq;
+
+TEST(UtilTest, readIntegers) {
+    // Test an empty file.
+    int fd = open("/dev/null", O_RDWR);
+    std::vector<int> retVal = PerfUtils::Util::readIntegers(fd, '\n');
+    EXPECT_EQ(0, retVal.size());
+    close(fd);
+
+    // Create a file for testing
+    char* filename = strdup("/tmp/readIntegers_XXXXXX");
+    fd = mkstemp(filename);
+    for (int i = 0; i < 1024; i++) {
+        char numBuf[10];
+        snprintf(numBuf, sizeof(numBuf), "%d\n", i);
+        write(fd, numBuf, strlen(numBuf));
+    }
+
+    // Test the temporary file
+    retVal = PerfUtils::Util::readIntegers(fd, '\n');
+    EXPECT_EQ(1024, retVal.size());
+
+    for (int i = 0; i < retVal.size(); i++) {
+        EXPECT_EQ(i, retVal[i]);
+    }
+    close(fd);
+
+    // Test reading from cpuset file
+    fd = open("/sys/fs/cgroup/cpuset/tasks", O_RDONLY);
+    retVal = PerfUtils::Util::readIntegers(fd, '\n');
+    EXPECT_NE(0, retVal.size());
+}
 
 TEST(UtilTest, fileGetContents) {
     // Test an empty file.

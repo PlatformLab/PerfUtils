@@ -15,9 +15,12 @@
 
 #include "Util.h"
 
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <mutex>
 #include <sstream>
@@ -159,6 +162,38 @@ fileGetContents(FILE* f) {
         fread(output, sizeof(char), size, f);
     }
     return output;
+}
+
+/**
+ * Read a list of integers from the given file descriptor delimited by the
+ * given delimiter.
+ */
+std::vector<int>
+readIntegers(int fd, char delimiter) {
+    std::vector<int> tids;
+    char buf[1024];
+    lseek(fd, 0, SEEK_SET);
+    int retVal = read(fd, buf, 1024);
+
+    int x = 0;
+    do {
+        if (retVal == -1) {
+            fprintf(stderr, "Error reading file %d; errno %d: %s\n", fd, errno,
+                    strerror(errno));
+        }
+        for (int i = 0; i < retVal; i++) {
+            char c = buf[i];
+            if (c == delimiter) {
+                tids.push_back(x);
+                x = 0;
+            } else {
+                x *= 10;
+                x += (c - '0');
+            }
+        }
+        retVal = read(fd, buf, 1024);
+    } while (retVal > 0);
+    return tids;
 }
 
 /**

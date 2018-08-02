@@ -47,6 +47,7 @@ std::string vformat(const char* format, va_list ap)
     __attribute__((format(printf, 1, 0)));
 void split(const std::string& s, char delim, std::vector<std::string>& elems);
 std::vector<std::string> split(const std::string& s, char delim);
+std::vector<int> readIntegers(int fd, char delimiter);
 char* fileGetContents(FILE* f);
 char* fileGetContents(const char* filename);
 std::vector<int> parseRanges(const char* coreDesc);
