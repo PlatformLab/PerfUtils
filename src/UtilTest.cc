@@ -51,11 +51,6 @@ TEST(UtilTest, readIntegers) {
         EXPECT_EQ(i, retVal[i]);
     }
     close(fd);
-
-    // Test reading from cpuset file
-    fd = open("/sys/fs/cgroup/cpuset/tasks", O_RDONLY);
-    retVal = PerfUtils::Util::readIntegers(fd, '\n');
-    EXPECT_NE(0, retVal.size());
 }
 
 TEST(UtilTest, fileGetContents) {
