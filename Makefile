@@ -76,7 +76,8 @@ INCLUDE+=-I${GTEST_DIR}/include -I${GMOCK_DIR}/include
 test: $(OBJECT_DIR)/UtilTest
 	$(OBJECT_DIR)/UtilTest
 
-$(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a
+$(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a \
+						$(OBJECT_DIR)/libPerfUtils.a
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
 
 $(OBJECT_DIR)/libgtest.a:
