@@ -173,6 +173,7 @@ readIntegers(int fd, char delimiter) {
     std::vector<int> tids;
     char buf[1024];
     lseek(fd, 0, SEEK_SET);
+    memset(buf, 0, 1024);
     int retVal = read(fd, buf, 1024);
 
     int x = 0;
@@ -191,6 +192,7 @@ readIntegers(int fd, char delimiter) {
                 x += (c - '0');
             }
         }
+        memset(buf, 0, 1024);
         retVal = read(fd, buf, 1024);
     } while (retVal > 0);
     return tids;
