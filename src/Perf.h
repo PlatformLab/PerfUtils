@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Stanford University
+/* Copyright (c) 2012 Stanford University
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -12,16 +12,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef PERFUTILS_STATS_H
-#define PERFUTILS_STATS_H
-
-#include "StatsMinimal.h"
-
-void printStatistics(const char* label, uint64_t* rawdata, size_t count,
-                     const char* datadir = NULL);
-
-void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound,
-                    uint64_t upperbound, uint64_t step);
-
-#endif
+#include "Stats.h"
+namespace PerfUtils {
+    Statistics bench(void (*function)(void), int numIterations);
+}

@@ -12,16 +12,35 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef PERFUTILS_STATS_MINIMAL_H
+#define PERFUTILS_STATS_MINIMAL_H
 
-#ifndef PERFUTILS_STATS_H
-#define PERFUTILS_STATS_H
+#include <stdint.h>
+#include <stddef.h>
 
-#include "StatsMinimal.h"
+/**
+ * This file exists to make the computeStatistics function available from C
+ * without an extra wrapper around the stats component of PerfUtils.
+ */
+struct Statistics {
+    size_t count;
+    uint64_t average;
+    uint64_t min;
+    uint64_t median;
+    uint64_t P10;
+    uint64_t P20;
+    uint64_t P30;
+    uint64_t P40;
+    uint64_t P50;
+    uint64_t P60;
+    uint64_t P70;
+    uint64_t P80;
+    uint64_t P90;
+    uint64_t P99;
+    uint64_t P999;
+    uint64_t P9999;
+    uint64_t max;
+};
 
-void printStatistics(const char* label, uint64_t* rawdata, size_t count,
-                     const char* datadir = NULL);
-
-void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound,
-                    uint64_t upperbound, uint64_t step);
-
-#endif
+struct Statistics computeStatistics(uint64_t* rawdata, size_t count);
+#endif // PERFUTILS_STATS_MINIMAL_H
