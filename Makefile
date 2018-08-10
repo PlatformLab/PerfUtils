@@ -41,7 +41,7 @@ $(OBJECT_DIR)/cycles_wrapper_test: $(OBJECT_DIR)/cycles_wrapper_test.o $(OBJECT_
 	$(CC) $(CFLAGS) -lstdc++ -o $@ $^
 
 $(OBJECT_DIR)/perf_wrapper_test: $(OBJECT_DIR)/perf_wrapper_test.o $(OBJECT_DIR)/libPerfUtils.a
-	$(CC) $(CFLAGS) -lstdc++ -o $@ $^
+	$(CC) $(CFLAGS) -lstdc++ -o $@ $^ -lm
 
 -include $(DEP)
 
@@ -76,15 +76,20 @@ GMOCK_DIR=../googletest/googlemock
 TEST_LIBS=-Lobj/ -lPerfUtils $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a
 INCLUDE+=-I${GTEST_DIR}/include -I${GMOCK_DIR}/include
 
-test: $(OBJECT_DIR)/UtilTest $(OBJECT_DIR)/PerfTest
+test: $(OBJECT_DIR)/UtilTest $(OBJECT_DIR)/PerfTest $(OBJECT_DIR)/StatsTest
 	$(OBJECT_DIR)/UtilTest
 	$(OBJECT_DIR)/PerfTest
+	$(OBJECT_DIR)/StatsTest
 
 $(OBJECT_DIR)/UtilTest: $(OBJECT_DIR)/UtilTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a \
 						$(OBJECT_DIR)/libPerfUtils.a
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
 
 $(OBJECT_DIR)/PerfTest: $(OBJECT_DIR)/PerfTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a \
+						$(OBJECT_DIR)/libPerfUtils.a
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
+
+$(OBJECT_DIR)/StatsTest: $(OBJECT_DIR)/StatsTest.o $(OBJECT_DIR)/libgtest.a  $(OBJECT_DIR)/libgmock.a \
 						$(OBJECT_DIR)/libPerfUtils.a
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $< $(GTEST_DIR)/src/gtest_main.cc $(TEST_LIBS) $(LIBS)  -o $@
 

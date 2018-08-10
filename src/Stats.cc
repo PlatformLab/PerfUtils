@@ -39,6 +39,14 @@ computeStatistics(uint64_t* rawdata, size_t count) {
         sum += rawdata[i];
     stats.count = count;
     stats.average = sum / count;
+    stats.stddev = 0;
+    for (size_t i = 0; i < count; i++) {
+        uint64_t diff = rawdata[i] > stats.average ? rawdata[i] - stats.average
+            : stats.average - rawdata[i];
+        stats.stddev += diff * diff;
+    }
+    stats.stddev /= count;
+    stats.stddev = static_cast<uint64_t>(sqrt(stats.stddev));
     stats.min = rawdata[0];
     stats.median = rawdata[count / 2];
     stats.P10 = rawdata[static_cast<int>(static_cast<double>(count) * 0.1)];

@@ -25,6 +25,7 @@
 struct Statistics {
     size_t count;
     uint64_t average;
+    uint64_t stddev;
     uint64_t min;
     uint64_t median;
     uint64_t P10;
