@@ -37,6 +37,7 @@ computeStatistics(uint64_t* rawdata, size_t count) {
     uint64_t sum = 0;
     for (size_t i = 0; i < count; i++)
         sum += rawdata[i];
+    stats.count = count;
     stats.average = sum / count;
     stats.min = rawdata[0];
     stats.median = rawdata[count / 2];
