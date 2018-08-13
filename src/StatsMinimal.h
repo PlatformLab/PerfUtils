@@ -19,6 +19,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This file exists to make the computeStatistics function available from C
  * without an extra wrapper around the stats component of PerfUtils.
@@ -58,5 +62,9 @@ struct Statistics transformStatistics(struct Statistics stats, uint64_t (*functi
  * Print out all the statistics in CSV format.
  */
 void printStatistics(struct Statistics stats, const char* label);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PERFUTILS_STATS_MINIMAL_H

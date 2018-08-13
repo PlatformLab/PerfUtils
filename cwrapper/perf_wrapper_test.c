@@ -29,9 +29,14 @@ void fiveHundredCycles() {
     fixedCycles(500);
 }
 
+uint64_t half(uint64_t n) {
+    return n / 2;
+}
+
 int
 main() {
     Statistics stats = bench(fiveHundredCycles, 100000);
+    stats = transformStatistics(stats, half);
     if (stats.count == 100000 && stats.count > stats.min) {
         puts(GREEN("perf_wrapper_test PASSED"));
     } else {
