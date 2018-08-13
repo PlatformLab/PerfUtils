@@ -23,6 +23,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+/**
+ * Simple test function for transforming statistics.
+ */
+uint64_t half(uint64_t n) {
+	return n / 2;
+}
 
 TEST(StatsTest, allStats) {
     const int numElements = 100;
@@ -36,4 +42,32 @@ TEST(StatsTest, allStats) {
     EXPECT_EQ(50, stats.median);
     EXPECT_EQ(49, stats.average);
     EXPECT_EQ(28, stats.stddev);
+}
+
+TEST(StatsTest, transformStatistics) {
+    const int numElements = 100;
+    uint64_t input[numElements];
+    for (uint64_t i = 0; i < numElements; i++)
+        input[i] = i;
+    Statistics stats = computeStatistics(input, numElements);
+	Statistics halfStats =  transformStatistics(stats, half);
+
+	EXPECT_EQ(stats.count, halfStats.count);
+    EXPECT_EQ(half(stats.average), halfStats.average);
+    EXPECT_EQ(half(stats.stddev), halfStats.stddev);
+    EXPECT_EQ(half(stats.min), halfStats.min);
+    EXPECT_EQ(half(stats.median), halfStats.median);
+    EXPECT_EQ(half(stats.P10), halfStats.P10);
+    EXPECT_EQ(half(stats.P20), halfStats.P20);
+    EXPECT_EQ(half(stats.P30), halfStats.P30);
+    EXPECT_EQ(half(stats.P40), halfStats.P40);
+    EXPECT_EQ(half(stats.P50), halfStats.P50);
+    EXPECT_EQ(half(stats.P60), halfStats.P60);
+    EXPECT_EQ(half(stats.P70), halfStats.P70);
+    EXPECT_EQ(half(stats.P80), halfStats.P80);
+    EXPECT_EQ(half(stats.P90), halfStats.P90);
+    EXPECT_EQ(half(stats.P99), halfStats.P99);
+    EXPECT_EQ(half(stats.P999), halfStats.P999);
+    EXPECT_EQ(half(stats.P9999), halfStats.P9999);
+    EXPECT_EQ(half(stats.max), halfStats.max);
 }

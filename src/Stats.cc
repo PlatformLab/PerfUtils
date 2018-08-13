@@ -66,20 +66,48 @@ computeStatistics(uint64_t* rawdata, size_t count) {
     return stats;
 }
 
+Statistics
+transformStatistics(Statistics stats, uint64_t (*function)(uint64_t)) {
+    Statistics result;
+    result.count = stats.count;
+    result.average = function(stats.average);
+    result.stddev = function(stats.stddev);
+    result.min = function(stats.min);
+    result.median = function(stats.median);
+    result.P10 = function(stats.P10);
+    result.P20 = function(stats.P20);
+    result.P30 = function(stats.P30);
+    result.P40 = function(stats.P40);
+    result.P50 = function(stats.P50);
+    result.P60 = function(stats.P60);
+    result.P70 = function(stats.P70);
+    result.P80 = function(stats.P80);
+    result.P90 = function(stats.P90);
+    result.P99 = function(stats.P99);
+    result.P999 = function(stats.P999);
+    result.P9999 = function(stats.P9999);
+    result.max = function(stats.max);
+	return result;
+}
+
+void
+printStatistics(Statistics stats, const char* label) {
+	static bool headerPrinted = false;
+	if (!headerPrinted) {
+		puts("Benchmark,Count,Avg,Stddev,Median,Min,99%,"
+				"99.9%,99.99%,Max");
+		headerPrinted = true;
+	}
+	printf("%s,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n", label, stats.count, stats.average,
+			stats.stddev, stats.median, stats.min, stats.P99, stats.P999, stats.P9999,
+			stats.max);
+}
+
 void
 printStatistics(const char* label, uint64_t* rawdata, size_t count,
                 const char* datadir) {
-    static bool headerPrinted = false;
-    if (!headerPrinted) {
-        puts(
-            "Benchmark,Count,Avg,Median,Min,99%,"
-            "99.9%,99.99%,Max");
-        headerPrinted = true;
-    }
     Statistics stats = computeStatistics(rawdata, count);
-    printf("%s,%zu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n", label, count, stats.average,
-           stats.median, stats.min, stats.P99, stats.P999, stats.P9999,
-           stats.max);
+	printStatistics(stats, label);
 
     // Dump the data out
     if (datadir != NULL) {

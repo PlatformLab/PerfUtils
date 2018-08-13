@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 /**
  * This file exists to make the computeStatistics function available from C
@@ -44,4 +45,18 @@ struct Statistics {
 };
 
 struct Statistics computeStatistics(uint64_t* rawdata, size_t count);
+
+
+/**
+ * Apply a transformation function on all statistics, usually to change the
+ * units. It is assumed that the units on all statistics are initially
+ * identical.
+ */
+struct Statistics transformStatistics(struct Statistics stats, uint64_t (*function)(uint64_t));
+
+/**
+ * Print out all the statistics in CSV format.
+ */
+void printStatistics(struct Statistics stats, const char* label);
+
 #endif // PERFUTILS_STATS_MINIMAL_H
