@@ -149,7 +149,8 @@ fileGetContents(FILE* f) {
     char* output;
     // Determine file size
     fseek(f, 0, SEEK_END);
-    size_t size = ftell(f);
+    // Need an extra byte for the null terminator.
+    size_t size = ftell(f) + 1;
 
     // We don't want to allocate memory if the file size is zero, because it is
     // undefined behavior to dereference such memory.
@@ -158,6 +159,7 @@ fileGetContents(FILE* f) {
         output[0] = '\0';
     } else {
         output = new char[size];
+        output[size - 1] = '\0';
         rewind(f);
         fread(output, sizeof(char), size, f);
     }
