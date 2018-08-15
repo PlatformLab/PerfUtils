@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -30,8 +31,22 @@ void fixedCycles(int N) {
     }
 }
 
+void fixedPerformance(uint64_t* N) {
+    *N = 7;
+}
+
 TEST(PerfTest, bench) {
     Statistics stats = PerfUtils::bench([]() {fixedCycles(500);}, 100000);
     EXPECT_EQ(100000, stats.count);
     EXPECT_LE(20, stats.min);
+}
+
+TEST(PerfTest, manualBench) {
+    Statistics stats = PerfUtils::manualBench(fixedPerformance, 100000);
+    EXPECT_EQ(100000, stats.count);
+    EXPECT_EQ(7, stats.average);
+    EXPECT_EQ(7, stats.median);
+    EXPECT_EQ(7, stats.min);
+    EXPECT_EQ(7, stats.max);
+    EXPECT_EQ(0, stats.stddev);
 }

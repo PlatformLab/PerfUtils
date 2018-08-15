@@ -15,4 +15,5 @@
 #include "Stats.h"
 namespace PerfUtils {
     Statistics bench(void (*function)(void), int numIterations);
+    Statistics manualBench(void (*function)(uint64_t*), int numIterations);
 }

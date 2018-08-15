@@ -25,6 +25,7 @@ extern "C" {
 
 typedef struct Statistics Statistics;
 Statistics bench(void (*function)(void), int numIterations);
+Statistics manualBench(void (*function)(uint64_t*), int numIterations);
 
 #ifdef __cplusplus
 }

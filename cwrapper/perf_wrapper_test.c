@@ -33,13 +33,24 @@ uint64_t half(uint64_t n) {
     return n / 2;
 }
 
+void fixedPerformance(uint64_t* N) {
+    *N = 7;
+}
+
 int
 main() {
     Statistics stats = bench(fiveHundredCycles, 100000);
     stats = transformStatistics(stats, half);
     if (stats.count == 100000 && stats.count > stats.min) {
-        puts(GREEN("perf_wrapper_test PASSED"));
+        puts(GREEN("perf_wrapper_test::bench PASSED"));
     } else {
-        puts(RED("perf_wrapper FAILED"));
+        puts(RED("perf_wrapper_test::bench FAILED"));
+    }
+
+    stats = manualBench(fixedPerformance, 100000);
+    if (stats.count == 100000 && stats.average == 7 && stats.median == 7 && stats.min == 7 && stats.max == 7 && stats.stddev == 0) {
+        puts(GREEN("perf_wrapper_test::manualBench PASSED"));
+    } else {
+        puts(RED("perf_wrapper_test::manualBench FAILED"));
     }
 }

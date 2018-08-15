@@ -41,4 +41,17 @@ namespace PerfUtils {
         delete[] latencies;
         return stats;
     }
+    Statistics manualBench(void (*function)(uint64_t*), int numIterations) {
+        uint64_t* latencies = new uint64_t[numIterations];
+
+        // Page in the memory
+        memset(latencies, 0, numIterations * sizeof(uint64_t));
+        for (int i = 0; i < numIterations; i++) {
+            function(&latencies[i]);
+        }
+
+        Statistics stats = computeStatistics(latencies, numIterations);
+        delete[] latencies;
+        return stats;
+    }
 }

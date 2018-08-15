@@ -22,6 +22,10 @@ Statistics
 bench(void (*function)(void), int numIterations) {
     return PerfUtils::bench(function, numIterations);
 }
+Statistics
+manualBench(void (*function)(uint64_t*), int numIterations) {
+    return PerfUtils::manualBench(function, numIterations);
+}
 
 #ifdef __cplusplus
 }
