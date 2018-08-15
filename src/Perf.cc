@@ -41,6 +41,12 @@ namespace PerfUtils {
         delete[] latencies;
         return stats;
     }
+
+    /**
+     * Run the given function for numIterations, and compute statistics on the
+     * times reported by the function itself. The only argument to the function
+     * is an output parameter where the measured time should be placed.
+     */
     Statistics manualBench(void (*function)(uint64_t*), int numIterations) {
         uint64_t* latencies = new uint64_t[numIterations];
 
