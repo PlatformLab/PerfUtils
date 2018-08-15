@@ -3,6 +3,12 @@ cmake_minimum_required (VERSION 3.11)
 project(PerfUtils VERSION 0.1.0 LANGUAGES CXX C)
 
 ################################################################################
+## Dependencies ################################################################
+################################################################################
+
+find_package(Git REQUIRED) # needed to download google-test
+
+################################################################################
 ## Target Definiton ############################################################
 ################################################################################
 add_library(PerfUtils
@@ -92,7 +98,23 @@ install(
 ################################################################################
 ## Tests #######################################################################
 ################################################################################
-include(cmake/googletest/googletest-config.cmake)
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        2172c08c9241ab0cc8857980bbe925fe1a55cf3c
+)
+
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+    FetchContent_Populate(googletest)
+    add_subdirectory(
+        ${googletest_SOURCE_DIR}
+        ${googletest_BINARY_DIR}
+        EXCLUDE_FROM_ALL
+    )
+endif()
+
 include(GoogleTest)
 
 # Enables the add_test macro, which adds the test to the list to run.
