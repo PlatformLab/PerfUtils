@@ -143,7 +143,8 @@ def scan(f, flog):
                 # estimation log file.
                 if not flogString:
                     break
-                if cleanedUpRampUp:
+                # Don't print estimation logs if no coremap has been printed.
+                if cleanedUpRampUp and (lastPrintTime > 0):
                     print('{:>15.2f}  {:>15.2f} '.format(thisDumpTime, thisDumpTime - lastPrintTime))
                     print(flogString)
                     lastPrintTime = thisDumpTime
