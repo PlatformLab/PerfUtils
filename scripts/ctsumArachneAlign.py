@@ -76,11 +76,14 @@ def scan(f, flog):
         print('  {:>8}|{:<8}'.format(int(id), int(id + hypertwin)), end='')
     print('')
 
-    timeSinceLastPrint = 0
+    lastPrintTime = 0
     startCycle = 0 # coretrace start cycle, should be earlier than estimation.
     cyclesPerNanoSec = 1.0 # cycles per nano second
     # pre-read one chunk from Arachne estimation log.
     flogTimeCycle, flogString = readOneDump(flog)
+    # If false, means we have not encountered the cleanup point and we should
+    # print nothing.
+    cleanedUpRampUp = False
     for line in f:
         # First, find the start cycles
         match = re.match('START_CYCLES ([0-9]+)', line)
@@ -93,12 +96,18 @@ def scan(f, flog):
             continue
 
         # Try to match the coretrace
+        match = re.match('.* [-]+CLEANUP CORETRACE[-]+', line)
+        if match:
+            # We don't want the rampup phase and ended phase. Just keep the
+            # benchmark running part.
+            cleanedUpRampUp = not cleanedUpRampUp
+            continue
+
         match = re.match(' *([0-9.]+) ns \(\+ *([0-9.]+) ns\): (.*)', line)
         if not match:
             continue
         thisEventTime = float(match.group(1))
         thisEventInterval = float(match.group(2))
-        timeSinceLastPrint += thisEventInterval
         thisEvent = match.group(3)
         submatch = re.match('\[(.*)\] cpuid: ([0-9]+)', thisEvent)
         if not submatch:
@@ -106,18 +115,20 @@ def scan(f, flog):
         threadName = submatch.group(1)
         thisCoreId = int(submatch.group(2))
 
-        prevCoreId = -1
-        if threadName not in threadCoreIds:
-            threadCoreIds[threadName] = []
-        else:
-            prevCoreId = threadCoreIds[threadName][-1]
+        # Only update the coremap if we have passed the cleanup point.
+        if cleanedUpRampUp:
+            prevCoreId = -1
+            if threadName not in threadCoreIds:
+                threadCoreIds[threadName] = []
+            else:
+                prevCoreId = threadCoreIds[threadName][-1]
 
-        # Clear the data on the previous core
-        if prevCoreId >= 0 and threadName in coreIdThreads[prevCoreId]:
-            coreIdThreads[prevCoreId].remove(threadName)
-        threadCoreIds[threadName].append(thisCoreId)
+            # Clear the data on the previous core
+            if prevCoreId >= 0 and threadName in coreIdThreads[prevCoreId]:
+                coreIdThreads[prevCoreId].remove(threadName)
+            threadCoreIds[threadName].append(thisCoreId)
 
-        coreIdThreads[thisCoreId].append(threadName)
+            coreIdThreads[thisCoreId].append(threadName)
 
         # Print the current core map only if a worker thread changed the core.
         isWorker = re.match('(w[0-9]+)', threadName)
@@ -126,16 +137,23 @@ def scan(f, flog):
             # Because flogTimeCycle is raw cycle, while thisEventTime is a
             # relative cycle. We need to use startCycle to calculate the
             # relative estimation log cycle.
-            while (flogTimeCycle - startCycle) / cyclesPerNanoSec <= thisEventTime:
+            thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+            while  thisDumpTime <= thisEventTime:
                 # if flogString is empty, it means we have reached the end of
                 # estimation log file.
                 if not flogString:
                     break
-                print(flogString)
+                if cleanedUpRampUp:
+                    print('{:>15.2f}  {:>15.2f} '.format(thisDumpTime, thisDumpTime - lastPrintTime))
+                    print(flogString)
+                    lastPrintTime = thisDumpTime
+
                 flogTimeCycle, flogString = readOneDump(flog)
-                    
-            printCoreMap(thisEventTime, timeSinceLastPrint)
-            timeSinceLastPrint = 0
+                thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+
+            if cleanedUpRampUp:
+                printCoreMap(thisEventTime, thisEventTime - lastPrintTime)
+                lastPrintTime = thisEventTime
 
 
 def printCoreMap(currTime, deltaTime):
