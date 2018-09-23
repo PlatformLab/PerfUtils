@@ -42,6 +42,10 @@ coreIdThreads = {}
 # This variable is the number of physical cores (hypertwins) in the system
 numCores = 0
 
+# If true, print out core changes of video threads. Otherwise, only print
+# coremap when memcached worker threads changed core.
+verboseLog = False
+
 def readOneDump(f):
     dumpString = ''
     startCycle = 0
@@ -56,7 +60,18 @@ def readOneDump(f):
             startCycle = float(match.group(1))
     return startCycle, dumpString
 
-def scan(f, flog):
+def readOneLatencyRow(f):
+    rowString = ''
+    timeInUsec = 0
+    for line in f:
+        rowString = line
+        match = re.match('^([0-9]+),', line)
+        if match:
+            timeInUsec = float(match.group(1))
+        break
+    return timeInUsec, rowString
+
+def scan(f, flog, llog):
     """
     Scan the log file given by 'f' (handle for an open file) and collect
     information from the trace records as described by the arguments.
@@ -79,8 +94,12 @@ def scan(f, flog):
     lastPrintTime = 0
     startCycle = 0 # coretrace start cycle, should be earlier than estimation.
     cyclesPerNanoSec = 1.0 # cycles per nano second
+    startTimeInUsec = 0 # start timestamp in usec.
     # pre-read one chunk from Arachne estimation log.
     flogTimeCycle, flogString = readOneDump(flog)
+    # pre-read one row from memtier latency log.
+    latencyHeader = llog.readline()
+    llogTimeInUsec, llogString = readOneLatencyRow(llog)
     # If false, means we have not encountered the cleanup point and we should
     # print nothing.
     cleanedUpRampUp = False
@@ -96,12 +115,67 @@ def scan(f, flog):
             continue
 
         # Try to match the coretrace
-        match = re.match('.* [-]+CLEANUP CORETRACE[-]+', line)
+        match = re.match(' *([0-9.]+) ns .*[-]+CLEANUP CORETRACE: Time: tv_sec=([0-9]+), tv_usec=([0-9]+) [-]+', line)
         if match:
+            if not cleanedUpRampUp:
+                eventTime = float(match.group(1))
+                startTimeInSec = float(match.group(2))
+                startTimeInUsec = float(match.group(3)) + startTimeInSec * 1000000.0
+                startTimeInUsec -= eventTime/1000.0 # substrate to the start.
             # We don't want the rampup phase and ended phase. Just keep the
             # benchmark running part.
             cleanedUpRampUp = not cleanedUpRampUp
             continue
+
+        match = re.match(' *([0-9.]+) ns .*: CLEANUP: Worker (.*) on core ([0-9]+) going down!', line)
+        if match:
+            # clean up the coremap for this worker. We should use the info from
+            # our threadCoreIds not the coretrace. Because for NoArbiter case,
+            # the coreId is a fake one.
+            thisEventTime = float(match.group(1))
+            threadName = match.group(2)
+            prevCoreId = -1
+            if cleanedUpRampUp:
+                # Check whether we should print the estimation log and latency log.
+                # Because flogTimeCycle is raw cycle, while thisEventTime is a
+                # relative cycle. We need to use startCycle to calculate the
+                # relative estimation log cycle.
+                thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+                thisLatencyTime = (llogTimeInUsec - startTimeInUsec) * 1e3
+                while  thisDumpTime <= thisEventTime or thisLatencyTime <= thisEventTime:
+                    if thisDumpTime < thisLatencyTime:
+                        # if flogString is empty, it means we have reached the
+                        # end of estimation log file.
+                        if not flogString:
+                            thisDumpTime = float("inf")
+                            continue
+                        # Don't print estimation logs if no coremap has been printed.
+                        if lastPrintTime > 0:
+                            print('{:>15.2f}  {:>15.2f} '.format(thisDumpTime, thisDumpTime - lastPrintTime))
+                            print(flogString)
+                            lastPrintTime = thisDumpTime
+
+                        flogTimeCycle, flogString = readOneDump(flog)
+                        thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+                    else:
+                        # if llogString is empty, it means we have reached the
+                        # end of latency log file. 
+                        if not llogString:
+                            thisLatencyTime = float("inf")
+                            continue
+                        print('{:>15.2f}  {:>15.2f} '.format(thisLatencyTime, thisLatencyTime - lastPrintTime))
+                        print(latencyHeader, end='')
+                        print(llogString)
+                        lastPrintTime = thisLatencyTime
+                        llogTimeInUsec, llogString = readOneLatencyRow(llog)
+                        thisLatencyTime = (llogTimeInUsec - startTimeInUsec) * 1e3
+
+                if threadName in threadCoreIds:
+                    prevCoreId = threadCoreIds[threadName][-1]
+                if prevCoreId > 0 and threadName in coreIdThreads[prevCoreId]:
+                    coreIdThreads[prevCoreId].remove(threadName)
+                    printCoreMap(thisEventTime, thisEventTime - lastPrintTime)
+                    lastPrintTime = thisEventTime
 
         match = re.match(' *([0-9.]+) ns \(\+ *([0-9.]+) ns\): (.*)', line)
         if not match:
@@ -131,26 +205,45 @@ def scan(f, flog):
             coreIdThreads[thisCoreId].append(threadName)
 
         # Print the current core map only if a worker thread changed the core.
-        isWorker = re.match('(w[0-9]+)', threadName)
+        if verboseLog:
+            isWorker = re.match('(w[0-9]+|avid[0-9]+)', threadName)
+        else:
+            isWorker = re.match('(w[0-9]+)', threadName)
         if isWorker:
-            # Check whether we should print the estimation log.
+            # Check whether we should print the estimation log and latency log.
             # Because flogTimeCycle is raw cycle, while thisEventTime is a
             # relative cycle. We need to use startCycle to calculate the
             # relative estimation log cycle.
             thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
-            while  thisDumpTime <= thisEventTime:
-                # if flogString is empty, it means we have reached the end of
-                # estimation log file.
-                if not flogString:
-                    break
-                # Don't print estimation logs if no coremap has been printed.
-                if cleanedUpRampUp and (lastPrintTime > 0):
-                    print('{:>15.2f}  {:>15.2f} '.format(thisDumpTime, thisDumpTime - lastPrintTime))
-                    print(flogString)
-                    lastPrintTime = thisDumpTime
+            thisLatencyTime = (llogTimeInUsec - startTimeInUsec) * 1e3
+            while  thisDumpTime <= thisEventTime or thisLatencyTime <= thisEventTime:
+                if thisDumpTime < thisLatencyTime:
+                    # if flogString is empty, it means we have reached the
+                    # end of estimation log file.
+                    if not flogString:
+                        thisDumpTime = float("inf")
+                        continue
+                    # Don't print estimation logs if no coremap has been printed.
+                    if cleanedUpRampUp and lastPrintTime > 0:
+                        print('{:>15.2f}  {:>15.2f} '.format(thisDumpTime, thisDumpTime - lastPrintTime))
+                        print(flogString)
+                        lastPrintTime = thisDumpTime
 
-                flogTimeCycle, flogString = readOneDump(flog)
-                thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+                    flogTimeCycle, flogString = readOneDump(flog)
+                    thisDumpTime = (flogTimeCycle - startCycle) / cyclesPerNanoSec
+                else:
+                    # if llogString is empty, it means we have reached the
+                    # end of latency log file. 
+                    if not llogString:
+                        thisLatencyTime = float("inf")
+                        continue
+                    if cleanedUpRampUp:
+                        print('{:>15.2f}  {:>15.2f} '.format(thisLatencyTime, thisLatencyTime - lastPrintTime))
+                        print(latencyHeader, end='')
+                        print(llogString)
+                        lastPrintTime = thisLatencyTime
+                    llogTimeInUsec, llogString = readOneLatencyRow(llog)
+                    thisLatencyTime = (llogTimeInUsec - startTimeInUsec) * 1e3
 
             if cleanedUpRampUp:
                 printCoreMap(thisEventTime, thisEventTime - lastPrintTime)
@@ -202,19 +295,28 @@ def parseArgs():
     parser.add_argument('--input', '-i', type=str, required=True,
         dest='fileName',
         help='Input coretrace log file name.')
-    parser.add_argument('--estimation-log', '-l', type=str, required=True,
+    parser.add_argument('--estimation-log', '-e', type=str, required=True,
         dest='estimationLog',
         help='Input Arachne estimation log file name.')
+    parser.add_argument('--latency-log', '-l', type=str, required=True,
+        dest='latencyLog',
+        help='Input latency log file name.')
+    parser.add_argument('--verbose', '-v', type=bool, required=False,
+        dest='verboseLog',
+        help='Print verbose logs for video threads.')
     return parser.parse_args()
 
 
 # The main entraince of the script
 def main(args):
     global numCores
+    global verboseLog
     numCores = args.numCores
     fileName = args.fileName
     estimationLog = args.estimationLog
-    scan(open(fileName), open(estimationLog));
+    verboseLog = args.verboseLog
+    latencyLog = args.latencyLog
+    scan(open(fileName), open(estimationLog), open(latencyLog));
 
 
 if __name__ == '__main__':
