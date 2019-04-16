@@ -27,15 +27,13 @@ target_include_directories(PerfUtils
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cwrappers>
         $<INSTALL_INTERFACE:include>
 )
-target_compile_definitions(PerfUtils
-    PRIVATE NDEBUG
-)
-target_compile_options(PerfUtils
-    PRIVATE -O3
-)
 target_compile_features(PerfUtils
     PUBLIC
         cxx_std_11
+)
+target_compile_definitions(PerfUtils
+    PUBLIC
+        $<$<CONFIG:Debug>:TESTING>
 )
 set_target_properties(PerfUtils PROPERTIES
     VERSION ${PerfUtils_VERSION}
@@ -44,7 +42,7 @@ set_target_properties(PerfUtils PROPERTIES
 ################################################################################
 ## Installation & Export #######################################################
 ################################################################################
-install(TARGETS PerfUtils EXPORT PerfUtilsTargets 
+install(TARGETS PerfUtils EXPORT PerfUtilsTargets
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
